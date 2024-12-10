@@ -183,7 +183,7 @@ public class MapActivity extends AppCompatActivity {
     private long lastAlertTime = 0; // Lưu thời gian cảnh báo gần nhất
     private static final long ALERT_INTERVAL = 5000;// Thời gian bắt đầu phát hiện ổ gà
     ImageView imgAvatar;
-    TextView tvname, tvemail2454;
+    TextView tvname, tvemail;
     boolean focusLocation = true;
     private MapboxNavigation mapboxNavigation;
 

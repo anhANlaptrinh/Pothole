@@ -1,0 +1,23 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Pothole</string>
+    <string name="mapbox_access_token" translatable="false" tools:ignore="UnusedResources">sk.eyJ1IjoiZG9odXluaGFuMjQwOCIsImEiOiJjbTJkMmRzNzIwZWdrMmlzN2VqMmloaWRmIn0.0N6lFPS8eNyclXJjRkpV0g</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="app_name1">Pothole Detector</string>
+    <string name="sign_in">SIGN IN</string>
+    <string name="sign_in_subtitle">Now you are ready to log in. By signing in you are agreeing to our Terms and privacy policy.</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="forgot_password">Forgot Password ?</string>
+    <string name="login">LOGIN</string>
+    <string name="or">OR</string>
+    <string name="sign_in_google">Sign In with Google</string>
+    <string name="sign_up_email">Sign Up with Email</string>
+    <string name="terms_privacy_policy">Terms and privacy policy</string>
+    <string name="profile">Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="change_password">Change Password</string>
+    <string name="general">General</string>
+    <string name="select_language">Select Language</string>
+    <string name="logout">Log out</string>
+</resources>

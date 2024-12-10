@@ -1,0 +1,23 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Pothole</string>
+    <string name="mapbox_access_token" translatable="false" tools:ignore="UnusedResources">sk.eyJ1IjoiZG9odXluaGFuMjQwOCIsImEiOiJjbTJkMmRzNzIwZWdrMmlzN2VqMmloaWRmIn0.0N6lFPS8eNyclXJjRkpV0g</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="app_name1">Detector de Buracos</string>
+    <string name="sign_in">ENTRAR</string>
+    <string name="sign_in_subtitle">Agora você está pronto para fazer login. Ao entrar, você concorda com nossos Termos e política de privacidade.</string>
+    <string name="hint_email">E-mail</string>
+    <string name="hint_password">Senha</string>
+    <string name="forgot_password">Esqueceu a senha?</string>
+    <string name="login">LOGIN</string>
+    <string name="or">OU</string>
+    <string name="sign_in_google">Entrar com o Google</string>
+    <string name="sign_up_email">Registrar com E-mail</string>
+    <string name="terms_privacy_policy">Termos e política de privacidade</string>
+    <string name="profile">Perfil</string>
+    <string name="edit_profile">Editar Perfil</string>
+    <string name="change_password">Alterar Senha</string>
+    <string name="general">Geral</string>
+    <string name="select_language">Selecionar Idioma</string>
+    <string name="logout">Sair</string>
+</resources>

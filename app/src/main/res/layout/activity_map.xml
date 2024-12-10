@@ -1,0 +1,195 @@
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/main"
+    android:fitsSystemWindows="true"
+    tools:openDrawer="start">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:fitsSystemWindows="true">
+
+        <FrameLayout
+            android:id="@+id/frame_layout"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" >
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/map">
+
+                <com.mapbox.maps.MapView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/mapView"
+                    android:layout_marginBottom="80dp"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="64sp"
+                    android:layout_marginStart="10sp"
+                    android:layout_marginEnd="10sp"
+                    android:elevation="4dp"
+                    android:hint="Search"
+                    android:background="@drawable/edittext_background"
+
+                    android:id="@+id/searchLayout"
+                    app:boxCornerRadiusBottomEnd="20sp"
+                    app:boxCornerRadiusBottomStart="20sp"
+                    app:boxCornerRadiusTopEnd="20sp"
+                    app:boxCornerRadiusTopStart="20sp"
+                    app:boxStrokeWidthFocused="0sp"
+                    app:boxStrokeWidth="0sp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/edittext_background"
+                        android:inputType="text"
+                        android:id="@+id/searchET" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.mapbox.search.ui.view.SearchResultsView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/search_results_view"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone"
+                    android:elevation="4dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="22dp"
+                    android:layout_below="@id/searchLayout" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10sp"
+                    android:layout_marginEnd="10sp"
+                    android:layout_alignParentBottom="true"
+                    android:background="@drawable/ripple_button_background"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    app:backgroundTint="#00D084"
+                    android:layout_marginBottom="105dp"
+                    android:id="@+id/setRoute"
+                    android:text="Set Route" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/mylocation"
+                    android:id="@+id/focusLocation"
+                    android:layout_alignParentEnd="true"
+                    android:layout_above="@id/setRoute"
+                    android:layout_margin="20sp" />
+
+                <RelativeLayout
+                    android:id="@+id/speedContainer"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_above="@+id/focusLocation"
+                    android:background="@drawable/circular_progess"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/speedText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="24"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:gravity="center" />
+
+                    <TextView
+                        android:id="@+id/speedUnit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="km/h"
+                        android:textSize="10sp"
+                        android:textColor="#FFFFFF"
+                        android:layout_below="@id/speedText"
+                        android:gravity="center" />
+                </RelativeLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginBottom="20dp"
+                    android:background="@drawable/ripple_button_background"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    android:backgroundTint="#00D084"
+                    android:id="@+id/cancelRoute"
+                    android:layout_above="@id/enableDetection"
+                    android:layout_alignParentStart="true"
+                    app:backgroundTint="#00D084"
+                    app:icon="@drawable/baseline_clear_24"
+                    app:iconTint="@android:color/black"
+                    app:iconPadding="0dp"
+                    app:iconGravity="textStart"
+                    app:cornerRadius="30dp"
+                    android:elevation="8dp"
+                    android:textColor="@android:color/white"
+                    android:gravity="center" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginBottom="20dp"
+                    android:background="@drawable/ripple_button_background"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    android:backgroundTint="#00D084"
+                    android:id="@+id/enableDetection"
+                    android:layout_above="@id/setRoute"
+                    android:layout_alignParentStart="true"
+                    app:backgroundTint="#00D084"
+                    app:icon="@drawable/detection"
+                    app:iconTint="@android:color/black"
+                    app:iconPadding="0dp"
+                    app:iconGravity="textStart"
+                    app:cornerRadius="30dp"
+                    android:elevation="8dp"
+                    android:textColor="@android:color/white"
+                    android:gravity="center" />
+            </RelativeLayout>
+
+            <androidx.coordinatorlayout.widget.CoordinatorLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <com.google.android.material.bottomappbar.BottomAppBar
+                    android:id="@+id/bottomAppBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:background="@color/white"
+                    app:fabCradleMargin="10dp"
+                    app:fabCradleRoundedCornerRadius="50dp">
+
+                    <com.google.android.material.bottomnavigation.BottomNavigationView
+                        android:id="@+id/bottomNavigationView1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="20dp"
+                        android:background="@android:color/transparent"
+                        app:labelVisibilityMode="labeled"
+                        app:menu="@menu/bottom_menu" />
+                </com.google.android.material.bottomappbar.BottomAppBar>
+            </androidx.coordinatorlayout.widget.CoordinatorLayout>
+        </FrameLayout>
+    </LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

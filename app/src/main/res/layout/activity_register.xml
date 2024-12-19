@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingTop="70dp"> <!-- Căn giữa toàn bộ LinearLayout trong FrameLayout -->
+        android:paddingTop="100dp">
 
         <!-- Logo and Title -->
         <LinearLayout
@@ -32,7 +32,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="Pothole Detector"
+                android:text="@string/app_name1"
                 android:textColor="#000000"
                 android:textSize="30sp"
                 android:textStyle="bold" />
@@ -43,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingBottom="8dp"
-            android:text="SIGN UP"
+            android:text="@string/sign_up"
             android:textColor="#000000"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -55,7 +55,7 @@
             android:paddingBottom="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:text="Looks like you don’t have an account. Let’s create a new account for you."
+            android:text="@string/subtitle"
             android:textColor="#666666"
             android:textSize="15sp" />
 
@@ -68,7 +68,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:background="@drawable/edittext_background"
-            android:hint="Email"
+            android:hint="@string/email_hint"
             android:inputType="textEmailAddress"
             android:padding="12dp" />
 
@@ -80,7 +80,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:background="@drawable/edittext_background"
-            android:hint="FullName"
+            android:hint="@string/fullname_hint"
             android:inputType="text"
             android:padding="12dp" />
 
@@ -100,7 +100,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@drawable/edittext_background"
-                android:hint="Password"
+                android:hint="@string/password_hint"
                 android:inputType="textPassword" />
 
             <ImageView
@@ -127,7 +127,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@drawable/edittext_background"
-                android:hint="Re-Password"
+                android:hint="@string/repassword_hint"
                 android:inputType="textPassword" />
 
             <ImageView
@@ -143,7 +143,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingBottom="16dp"
-            android:text="By selecting Create Account below, I agree to Terms of Service Privacy and Policy"
+            android:text="@string/terms_conditions"
             android:textColor="#666666"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
@@ -160,36 +160,11 @@
             android:background="@drawable/ripple_button_background"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:text="CREATE ACCOUNT"
+            android:text="@string/create_account"
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
 
         <!-- OR Divider -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="16dp"
-            android:text="OR"
-            android:textColor="#666666"
-            android:textSize="14sp" />
-
-        <Button
-            android:id="@+id/google_sign_up_button"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="Sign Up with Google"
-            app:backgroundTint="#F2F2F2"
-            android:textColor="#666666"
-            android:textSize="14sp"
-            android:gravity="center"
-            android:background="@drawable/ripple_button_background"
-            android:layout_marginBottom="20dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:drawablePadding="8dp"
-            android:padding="12dp" />
 
         <ImageButton
             android:layout_width="40dp"
@@ -197,6 +172,7 @@
             android:id="@+id/button_back"
             app:backgroundTint="#00D084"
             android:background="@drawable/ripple_button_background"
-            android:src="@drawable/baseline_arrow_back_24"/>
+            android:src="@drawable/baseline_arrow_back_24"
+            android:contentDescription="@string/back" />
     </LinearLayout>
 </ScrollView>

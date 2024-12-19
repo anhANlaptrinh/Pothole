@@ -6,10 +6,12 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +34,9 @@ import retrofit2.Response;
 
 public class ForgotActivity extends AppCompatActivity {
     private EditText code_input, text_password_value, text_repassword_value, email_input;
+    private boolean isPasswordVisible = false;
+    private boolean isPasswordVisible1 = false;
+    private ImageView imgShowHidePassword,imgShowHidePassword1;
     private Button send_code, reset_password;
     private ImageButton button_back;
     private CountDownTimer countDownTimer;
@@ -67,27 +72,31 @@ public class ForgotActivity extends AppCompatActivity {
         send_code = findViewById(R.id.send_code);
         reset_password = findViewById(R.id.reset_password);
         button_back = findViewById(R.id.button_back);
+        imgShowHidePassword = findViewById(R.id.img_show_hide_password);
+        text_repassword_value.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        imgShowHidePassword.setImageResource(R.drawable.ic_eye_off);
+
+        imgShowHidePassword1 = findViewById(R.id.img_show_hide_password1);
+        text_password_value.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        imgShowHidePassword1.setImageResource(R.drawable.ic_eye_off);
     }
 
     private void event() {
-        button_back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(ForgotActivity.this, LoginActivity.class);
-                startActivity(intent);
-            }
+        button_back.setOnClickListener(view -> {
+            Intent intent = new Intent(ForgotActivity.this, LoginActivity.class);
+            startActivity(intent);
         });
 
         send_code.setOnClickListener(view -> {
             ProgressDialog progressDialog = new ProgressDialog(ForgotActivity.this);
-            progressDialog.setMessage("Đang kiểm tra email và gửi mã...");
+            progressDialog.setMessage(getString(R.string.sending_verification_code)); // Đa ngôn ngữ
             progressDialog.setCancelable(false);
             progressDialog.show();
 
             String email = email_input.getText().toString().trim();
             if (email.isEmpty()) {
                 progressDialog.dismiss();
-                Toast.makeText(ForgotActivity.this, "Vui lòng nhập email", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ForgotActivity.this, getString(R.string.enter_email), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -106,32 +115,33 @@ public class ForgotActivity extends AppCompatActivity {
                                 public void onResponse(Call<Void> call, Response<Void> response) {
                                     progressDialog.dismiss();
                                     if (response.isSuccessful()) {
-                                        Toast.makeText(ForgotActivity.this, "Đã gửi mã xác thực đến email của bạn", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(ForgotActivity.this, getString(R.string.code_sent_success), Toast.LENGTH_SHORT).show();
                                         startCountDownTimer();
                                     } else {
-                                        Toast.makeText(ForgotActivity.this, "Không thể gửi mã xác thực", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(ForgotActivity.this, getString(R.string.cannot_send_code), Toast.LENGTH_SHORT).show();
                                     }
                                 }
+
                                 @Override
                                 public void onFailure(Call<Void> call, Throwable t) {
                                     progressDialog.dismiss();
-                                    Toast.makeText(ForgotActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(ForgotActivity.this, getString(R.string.connection_error, t.getMessage()), Toast.LENGTH_SHORT).show();
                                 }
                             });
                         } else {
                             progressDialog.dismiss();
-                            Toast.makeText(ForgotActivity.this, "Email không tồn tại", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ForgotActivity.this, getString(R.string.email_not_exist), Toast.LENGTH_SHORT).show();
                         }
                     } else {
                         progressDialog.dismiss();
-                        Toast.makeText(ForgotActivity.this, "Lỗi khi kiểm tra email", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ForgotActivity.this, getString(R.string.email_check_error), Toast.LENGTH_SHORT).show();
                     }
                 }
 
                 @Override
                 public void onFailure(Call<Boolean> call, Throwable t) {
                     progressDialog.dismiss();
-                    Toast.makeText(ForgotActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ForgotActivity.this, getString(R.string.connection_error, t.getMessage()), Toast.LENGTH_SHORT).show();
                 }
             });
         });
@@ -140,70 +150,63 @@ public class ForgotActivity extends AppCompatActivity {
             String code = code_input.getText().toString().trim();
             String password = text_password_value.getText().toString().trim();
             String rePassword = text_repassword_value.getText().toString().trim();
-            String email = email_input.getText().toString().trim();
 
-            // Kiểm tra nếu các trường không rỗng
             if (code.isEmpty() || password.isEmpty() || rePassword.isEmpty()) {
-                Toast.makeText(ForgotActivity.this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ForgotActivity.this, getString(R.string.enter_all_fields), Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Kiểm tra mật khẩu và nhập lại mật khẩu giống nhau
             if (!password.equals(rePassword)) {
-                Toast.makeText(ForgotActivity.this, "Mật khẩu không khớp", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ForgotActivity.this, getString(R.string.password_not_match), Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Hiển thị ProgressDialog trong khi kiểm tra mã
             ProgressDialog progressDialog = new ProgressDialog(ForgotActivity.this);
-            progressDialog.setMessage("Đang kiểm tra mã và đặt lại mật khẩu...");
+            progressDialog.setMessage(getString(R.string.resetting_password));
             progressDialog.setCancelable(false);
             progressDialog.show();
 
             ApiService apiService = ApiClient.getApiService();
+            Call<Void> callVerifyCode = apiService.verifyCode(email_input.getText().toString().trim(), code);
 
-            // Gọi API verifyCode để kiểm tra mã xác thực
-            Call<Void> callVerifyCode = apiService.verifyCode(email, code);
             callVerifyCode.enqueue(new Callback<Void>() {
                 @Override
                 public void onResponse(Call<Void> call, Response<Void> response) {
                     if (response.isSuccessful()) {
-                        // Mã xác thực đúng, tiến hành reset password
-                        Call<Void> callResetPassword = apiService.resetPassword(email, password);
+                        Call<Void> callResetPassword = apiService.resetPassword(email_input.getText().toString().trim(), password);
                         callResetPassword.enqueue(new Callback<Void>() {
                             @Override
                             public void onResponse(Call<Void> call, Response<Void> response) {
                                 progressDialog.dismiss();
                                 if (response.isSuccessful()) {
-                                    Toast.makeText(ForgotActivity.this, "Đặt lại mật khẩu thành công", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(ForgotActivity.this, getString(R.string.reset_password_success), Toast.LENGTH_SHORT).show();
                                     Intent intent = new Intent(ForgotActivity.this, LoginActivity.class);
                                     startActivity(intent);
                                     finish();
                                 } else {
-                                    Toast.makeText(ForgotActivity.this, "Không thể đặt lại mật khẩu", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(ForgotActivity.this, getString(R.string.cannot_reset_password), Toast.LENGTH_SHORT).show();
                                 }
                             }
 
                             @Override
                             public void onFailure(Call<Void> call, Throwable t) {
                                 progressDialog.dismiss();
-                                Toast.makeText(ForgotActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ForgotActivity.this, getString(R.string.connection_error, t.getMessage()), Toast.LENGTH_SHORT).show();
                             }
                         });
                     } else {
                         progressDialog.dismiss();
-                        Toast.makeText(ForgotActivity.this, "Mã xác thực không đúng", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ForgotActivity.this, getString(R.string.invalid_code), Toast.LENGTH_SHORT).show();
                     }
                 }
 
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
                     progressDialog.dismiss();
-                    Toast.makeText(ForgotActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ForgotActivity.this, getString(R.string.connection_error, t.getMessage()), Toast.LENGTH_SHORT).show();
                 }
             });
         });
-
     }
 
     private void startCountDownTimer() {
@@ -216,13 +219,14 @@ public class ForgotActivity extends AppCompatActivity {
                 String time = String.format(Locale.getDefault(), "%02d:%02d",
                         TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished),
                         TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) % 60);
-                send_code.setText("Gửi lại sau " + time); // Hiển thị thời gian đếm ngược
+                send_code.setText(getString(R.string.resend_after) + " " + time);
             }
 
+            @Override
             public void onFinish() {
                 send_code.setEnabled(true);
                 send_code.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(ForgotActivity.this, R.color.original_button_color)));
-                send_code.setText("Gửi mã");
+                send_code.setText(getString(R.string.send_code1));
             }
         }.start();
     }

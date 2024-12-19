@@ -7,7 +7,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
-    private static final String BASE_URL = "https://potholedetect-backend.onrender.com/";
+    private static final String BASE_URL = "http://BackendPothole-env.eba-eggp9dp7.ap-southeast-1.elasticbeanstalk.com/";
     private static Retrofit retrofit = null;
 
     public static Retrofit getRetrofitInstance() {

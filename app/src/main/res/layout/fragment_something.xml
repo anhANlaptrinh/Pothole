@@ -26,15 +26,6 @@
             android:contentDescription="User Avatar"
             android:background="@drawable/circle_background" />
 
-        <TextView
-            android:id="@+id/userGreeting"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="Hello, Quoc Bao"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black" />
     </LinearLayout>
 
     <!-- Weather and Date Cards -->

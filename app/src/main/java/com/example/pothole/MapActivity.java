@@ -74,11 +74,13 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineProvider;
+import com.mapbox.android.core.location.LocationEngineRequest;
 import com.mapbox.android.core.location.LocationEngineResult;
 import com.mapbox.android.gestures.MoveGestureDetector;
 import com.mapbox.api.directions.v5.DirectionsCriteria;
@@ -150,8 +152,12 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MapActivity extends AppCompatActivity {
+
+    private List<Pothole> routePotholes = new ArrayList<>();
+    private boolean isRouting = false;
     MapView mapView;
     MaterialButton setRoute;
+    private TextInputLayout searchLayout;
     BottomNavigationView bottomNavigationView;
     FloatingActionButton focusLocationBtn;
     private final NavigationLocationProvider navigationLocationProvider = new NavigationLocationProvider();
@@ -165,117 +171,131 @@ public class MapActivity extends AppCompatActivity {
     private String permissionGranted;
     private SensorManager sensorManager;
     private Sensor accelerometer;
-    private Sensor gyroscope; // Con quay hồi chuyển
+    private Sensor gyroscope;
     private PotholeWebSocketClient webSocketClient;
     private SensorEventListener sensorEventListener;
-    private float lastMagnitude = Float.NaN; // Giá trị độ lớn trước đó
-    private float LEVEL_1_THRESHOLD = 1.5f; // Tăng ngưỡng ổ gà nhẹ
-    private float LEVEL_2_THRESHOLD = 2.0f; // Ngưỡng ổ gà vừa
-    private float LEVEL_3_THRESHOLD = 2.5f; // Ngưỡng ổ gà nặng
-    private float GYROSCOPE_THRESHOLD = 0.5f; // Ngưỡng cho tốc độ góc
-    private int WINDOW_SIZE = 10; // Kích thước cửa sổ làm mượt
-    private long DETECTION_INTERVAL = 1500; // Khoảng thời gian giữa các lần phát hiện (ms)
-    private float[] gravity = new float[3]; // Lưu giá trị trọng lực
-    private float[] gyroscopeValues = new float[3]; // Lưu giá trị từ con quay hồi chuyển
-    private Queue<Float> magnitudeValues = new LinkedList<>(); // Lưu các giá trị độ lớn để làm mượt
+    private float lastMagnitude = Float.NaN;
+    private float LEVEL_1_THRESHOLD = 1.5f;
+    private float LEVEL_2_THRESHOLD = 2.0f;
+    private float LEVEL_3_THRESHOLD = 2.5f;
+    private float GYROSCOPE_THRESHOLD = 0.5f;
+    private int WINDOW_SIZE = 10;
+    private long DETECTION_INTERVAL = 1500;
+    private float[] gravity = new float[3];
+    private float[] gyroscopeValues = new float[3];
+    private Queue<Float> magnitudeValues = new LinkedList<>();
     private long lastDetectionTime = 0;
     private long potholeStartTime = 0;
-    private long lastAlertTime = 0; // Lưu thời gian cảnh báo gần nhất
-    private static final long ALERT_INTERVAL = 5000;// Thời gian bắt đầu phát hiện ổ gà
+    private long lastAlertTime = 0;
+    private static final long ALERT_INTERVAL = 5000;
     ImageView imgAvatar;
     TextView tvname, tvemail;
     boolean focusLocation = true;
     private MapboxNavigation mapboxNavigation;
+    private LocationEngine locationEngine;
 
-    private final LocationObserver locationObserver = new LocationObserver() {
+    private final LocationEngineCallback<LocationEngineResult> locationCallback = new LocationEngineCallback<LocationEngineResult>() {
         @Override
-        public void onNewRawLocation(@NonNull Location location) {
-            // Không sử dụng trong phiên bản này
+        public void onSuccess(LocationEngineResult result) {
+            Location location = result.getLastLocation();
+            if (location != null) {
+                navigationLocationProvider.changePosition(location, result.getLocations(), null, null);
+                if (focusLocation) {
+                    updateCamera(Point.fromLngLat(location.getLongitude(), location.getLatitude()), (double) location.getBearing());
+                }
+                checkProximityToPotholes(location);
+                checkSpeedAndAdjustThreshold(location);
+                updateSpeed(location.getSpeed());
+            }
         }
 
         @Override
-        public void onNewLocationMatcherResult(@NonNull LocationMatcherResult locationMatcherResult) {
-            Location location = locationMatcherResult.getEnhancedLocation();
-            navigationLocationProvider.changePosition(location, locationMatcherResult.getKeyPoints(), null, null);
-            if (focusLocation) {
-                updateCamera(Point.fromLngLat(location.getLongitude(), location.getLatitude()), (double) location.getBearing());
-            }
-            checkProximityToPotholes(location);
-            checkSpeedAndAdjustThreshold(location);
-            updateSpeed(location.getSpeed());
+        public void onFailure(@NonNull Exception exception) {
+            Log.e("LocationEngine", "Location error: " + exception.getMessage());
         }
     };
 
-    private void updateSpeed(float speedInMetersPerSecond) {
-        int speedInKmh = (int) (speedInMetersPerSecond * 3.6); // Chuyển từ m/s sang km/h
+    // Đã bỏ locationObserver và không đăng ký nữa, do không dùng startTripSession
 
+    private void updateSpeed(float speedInMetersPerSecond) {
+        int speedInKmh = (int) (speedInMetersPerSecond * 3.6);
         runOnUiThread(() -> {
-            speedText.setText(String.valueOf(speedInKmh)); // Hiển thị số
-            speedUnit.setText("km/h"); // Đơn vị
+            speedText.setText(String.valueOf(speedInKmh));
+            speedUnit.setText("km/h");
         });
     }
 
     private void checkSpeedAndAdjustThreshold(Location location) {
         if (location != null) {
-            float speedInKmh = location.getSpeed() * 3.6f; // Chuyển đổi m/s sang km/h
+            float speedInKmh = location.getSpeed() * 3.6f;
             Log.d("SpeedCheck", "Tốc độ hiện tại: " + speedInKmh + " km/h");
 
             if (speedInKmh > 30) {
                 LEVEL_1_THRESHOLD = 2.0f;
                 LEVEL_2_THRESHOLD = 2.5f;
                 LEVEL_3_THRESHOLD = 3.0f;
-                DETECTION_INTERVAL = 2000; // Tăng thời gian giữa các lần phát hiện
+                DETECTION_INTERVAL = 2000;
                 Log.d("ThresholdAdjust", "Tăng ngưỡng phát hiện do tốc độ cao.");
             } else {
                 LEVEL_1_THRESHOLD = 1.5f;
                 LEVEL_2_THRESHOLD = 2.0f;
                 LEVEL_3_THRESHOLD = 2.5f;
-                DETECTION_INTERVAL = 1500; // Giá trị mặc định
+                DETECTION_INTERVAL = 1500;
                 Log.d("ThresholdAdjust", "Thiết lập ngưỡng mặc định.");
             }
         }
     }
 
     private void checkProximityToPotholes(Location userLocation) {
-        ApiService apiService = ApiClient.getApiService();
-        Call<List<Pothole>> call = apiService.getPotholes();
-
-        call.enqueue(new Callback<List<Pothole>>() {
-            @Override
-            public void onResponse(Call<List<Pothole>> call, Response<List<Pothole>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    for (Pothole pothole : response.body()) {
-                        double distance = calculateDistance(
-                                userLocation.getLatitude(),
-                                userLocation.getLongitude(),
-                                pothole.getLatitude(),
-                                pothole.getLongitude());
-
-                        // Kiểm tra nếu khoảng cách dưới 50m, kích hoạt rung và âm thanh
-                        if (distance < 50) {
-                            triggerPotholeAlert();
-                            break; // Chỉ cần cảnh báo một lần cho ổ gà gần nhất
+        if (isRouting && !routePotholes.isEmpty()) {
+            for (Pothole pothole : routePotholes) {
+                double distance = calculateDistance(
+                        userLocation.getLatitude(),
+                        userLocation.getLongitude(),
+                        pothole.getLatitude(),
+                        pothole.getLongitude());
+                if (distance < 50) {
+                    triggerPotholeAlert();
+                    return;
+                }
+            }
+        } else {
+            ApiService apiService = ApiClient.getApiService();
+            Call<List<Pothole>> call = apiService.getPotholes();
+            call.enqueue(new Callback<List<Pothole>>() {
+                @Override
+                public void onResponse(Call<List<Pothole>> call, Response<List<Pothole>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        for (Pothole pothole : response.body()) {
+                            double distance = calculateDistance(
+                                    userLocation.getLatitude(),
+                                    userLocation.getLongitude(),
+                                    pothole.getLatitude(),
+                                    pothole.getLongitude());
+                            if (distance < 25) {
+                                triggerPotholeAlert();
+                                break;
+                            }
                         }
                     }
                 }
-            }
-
-            @Override
-            public void onFailure(Call<List<Pothole>> call, Throwable t) {
-                Log.e("PotholeCheck", "Lỗi tải ổ gà: " + t.getMessage());
-            }
-        });
+                @Override
+                public void onFailure(Call<List<Pothole>> call, Throwable t) {
+                    Log.e("PotholeCheck", "Lỗi tải ổ gà: " + t.getMessage());
+                }
+            });
+        }
     }
 
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-        final int R = 6371; // Bán kính trái đất (km)
+        final int R = 6371;
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                 Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
                         Math.sin(dLon / 2) * Math.sin(dLon / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c * 1000; // Trả về khoảng cách theo mét
+        return R * c * 1000;
     }
 
     private void triggerPotholeAlert() {
@@ -286,13 +306,11 @@ public class MapActivity extends AppCompatActivity {
         lastAlertTime = currentTime;
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         if (vibrator != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE)); // Rung 1 giây
+            vibrator.vibrate(VibrationEffect.createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE));
         }
-        MediaPlayer mediaPlayer = MediaPlayer.create(this, R.raw.sound); // Thay `alert_sound` bằng file âm thanh của bạn
+        MediaPlayer mediaPlayer = MediaPlayer.create(this, R.raw.sound);
         if (mediaPlayer != null) {
-            mediaPlayer.setOnCompletionListener(mp -> {
-                mediaPlayer.release();
-            });
+            mediaPlayer.setOnCompletionListener(mp -> mediaPlayer.release());
             mediaPlayer.start();
         }
         Toast.makeText(this, "Cảnh báo: Sắp đến ổ gà!", Toast.LENGTH_LONG).show();
@@ -318,26 +336,24 @@ public class MapActivity extends AppCompatActivity {
         MapAnimationOptions animationOptions = new MapAnimationOptions.Builder().duration(1500L).build();
         CameraOptions cameraOptions = new CameraOptions.Builder().center(point).zoom(16.5)
                 .padding(new EdgeInsets(0.0, 0.0, 0.0, 0.0)).bearing(bearing).build();
-
         getCamera(mapView).easeTo(cameraOptions, animationOptions);
     }
 
     private final OnMoveListener onMoveListener = new OnMoveListener() {
         @Override
-        public void onMoveBegin(@NonNull MoveGestureDetector moveGestureDetector) {
+        public void onMoveBegin(@NonNull com.mapbox.android.gestures.MoveGestureDetector moveGestureDetector) {
             focusLocation = false;
             getGestures(mapView).removeOnMoveListener(this);
             focusLocationBtn.show();
         }
 
         @Override
-        public boolean onMove(@NonNull MoveGestureDetector moveGestureDetector) {
+        public boolean onMove(@NonNull com.mapbox.android.gestures.MoveGestureDetector moveGestureDetector) {
             return false;
         }
 
         @Override
-        public void onMoveEnd(@NonNull MoveGestureDetector moveGestureDetector) {
-            // Không sử dụng trong phiên bản này
+        public void onMoveEnd(@NonNull com.mapbox.android.gestures.MoveGestureDetector moveGestureDetector) {
         }
     };
 
@@ -352,9 +368,19 @@ public class MapActivity extends AppCompatActivity {
         }
     });
 
+    @SuppressLint("MissingPermission")
     private void startLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            mapboxNavigation.startTripSession();
+            locationEngine = LocationEngineProvider.getBestLocationEngine(this);
+            locationEngine.requestLocationUpdates(
+                    new LocationEngineRequest.Builder(500L)
+                            .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+                            .build(),
+                    locationCallback,
+                    getMainLooper()
+            );
+            locationEngine.getLastLocation(locationCallback);
+
             focusLocationBtn.hide();
             LocationComponentPlugin locationComponentPlugin = getLocationComponent(mapView);
             locationComponentPlugin.setEnabled(true);
@@ -387,6 +413,8 @@ public class MapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_map);
         setupWebSocket();
 
+        searchLayout = findViewById(R.id.searchLayout);
+        searchLayout.setVisibility(View.VISIBLE);
         bottomNavigationView = findViewById(R.id.bottomNavigationView1);
         mapView = findViewById(R.id.mapView);
         speedText = findViewById(R.id.speedText);
@@ -399,24 +427,23 @@ public class MapActivity extends AppCompatActivity {
         cancelRoute.setVisibility(View.GONE);
         setRoute = findViewById(R.id.setRoute);
 
-        // Cấu hình Route Line
         MapboxRouteLineOptions options = new MapboxRouteLineOptions.Builder(this)
                 .withRouteLineResources(new RouteLineResources.Builder().build())
                 .withRouteLineBelowLayerId(LocationComponentConstants.LOCATION_INDICATOR_LAYER).build();
         routeLineView = new MapboxRouteLineView(options);
         routeLineApi = new MapboxRouteLineApi(options);
 
-        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.test);
         NavigationOptions navigationOptions = new NavigationOptions.Builder(this).accessToken(getString(R.string.mapbox_access_token)).build();
         AnnotationPlugin annotationPlugin = AnnotationPluginImplKt.getAnnotations(mapView);
         PointAnnotationManager pointAnnotationManager = PointAnnotationManagerKt.createPointAnnotationManager(annotationPlugin, mapView);
         MapboxNavigationApp.setup(navigationOptions);
         mapboxNavigation = new MapboxNavigation(navigationOptions);
+
         checkPermissions();
         bottomNavigationView.setBackground(null);
         bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.home) {
-                // Xử lý sự kiện
+                // ...
             } else if (item.getItemId() == R.id.about) {
                 Intent intent = new Intent(MapActivity.this, MainActivity.class);
                 intent.putExtra("openFragment", "about");
@@ -433,7 +460,6 @@ public class MapActivity extends AppCompatActivity {
 
         enableDetection.setOnClickListener(view -> {
             isDetectionEnabled = !isDetectionEnabled;
-
             if (isDetectionEnabled) {
                 Toast.makeText(this, "Pothole Detection Enabled", Toast.LENGTH_SHORT).show();
                 sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -451,8 +477,8 @@ public class MapActivity extends AppCompatActivity {
             }
         });
 
+        // Không đăng ký locationObserver nữa vì không startTripSession()
         mapboxNavigation.registerRoutesObserver(routesObserver);
-        mapboxNavigation.registerLocationObserver(locationObserver);
 
         placeAutocomplete = PlaceAutocomplete.create(getString(R.string.mapbox_access_token));
         searchET = findViewById(R.id.searchET);
@@ -464,9 +490,7 @@ public class MapActivity extends AppCompatActivity {
 
         searchET.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                // Không sử dụng trong phiên bản này
-            }
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -489,9 +513,7 @@ public class MapActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable editable) {
-                // Không sử dụng trong phiên bản này
-            }
+            public void afterTextChanged(Editable editable) {}
         });
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -508,7 +530,8 @@ public class MapActivity extends AppCompatActivity {
             permissionGranted = Manifest.permission.ACCESS_COARSE_LOCATION;
             activityResultLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION);
         } else {
-            mapboxNavigation.startTripSession();
+            // Xóa mapboxNavigation.startTripSession();
+            // Giờ rely on startLocationUpdates() đã gọi từ checkPermissions()
         }
 
         focusLocationBtn.hide();
@@ -534,16 +557,13 @@ public class MapActivity extends AppCompatActivity {
 
             addOnMapClickListener(mapView.getMapboxMap(), point -> {
                 selectedPointAnnotationManager.deleteAll();
-
                 PointAnnotationOptions pointAnnotationOptions = new PointAnnotationOptions()
                         .withTextAnchor(TextAnchor.CENTER)
-                        .withIconImage(bitmap)
+                        .withIconImage(BitmapFactory.decodeResource(getResources(), R.drawable.test))
                         .withPoint(point);
-
                 selectedPointAnnotationManager.create(pointAnnotationOptions);
 
                 setRoute.setOnClickListener(view -> fetchRoute(point));
-
                 return true;
             });
 
@@ -555,9 +575,7 @@ public class MapActivity extends AppCompatActivity {
 
             placeAutocompleteUiAdapter.addSearchListener(new PlaceAutocompleteUiAdapter.SearchListener() {
                 @Override
-                public void onSuggestionsShown(@NonNull List<PlaceAutocompleteSuggestion> list) {
-                    // Không sử dụng trong phiên bản này
-                }
+                public void onSuggestionsShown(@NonNull List<PlaceAutocompleteSuggestion> list) {}
 
                 @Override
                 public void onSuggestionSelected(@NonNull PlaceAutocompleteSuggestion placeAutocompleteSuggestion) {
@@ -569,7 +587,7 @@ public class MapActivity extends AppCompatActivity {
                     selectedPointAnnotationManager.deleteAll();
                     PointAnnotationOptions pointAnnotationOptions = new PointAnnotationOptions()
                             .withTextAnchor(TextAnchor.CENTER)
-                            .withIconImage(bitmap)
+                            .withIconImage(BitmapFactory.decodeResource(getResources(), R.drawable.test))
                             .withPoint(placeAutocompleteSuggestion.getCoordinate());
                     selectedPointAnnotationManager.create(pointAnnotationOptions);
                     updateCamera(placeAutocompleteSuggestion.getCoordinate(), 0.0);
@@ -578,9 +596,7 @@ public class MapActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onPopulateQueryClick(@NonNull PlaceAutocompleteSuggestion placeAutocompleteSuggestion) {
-                    // Không sử dụng trong phiên bản này
-                }
+                public void onPopulateQueryClick(@NonNull PlaceAutocompleteSuggestion placeAutocompleteSuggestion) {}
 
                 @Override
                 public void onError(@NonNull Exception e) {
@@ -592,7 +608,7 @@ public class MapActivity extends AppCompatActivity {
 
     @SuppressLint("MissingPermission")
     private void fetchRoute(Point destination) {
-        LocationEngine locationEngine = LocationEngineProvider.getBestLocationEngine(MapActivity.this);
+        locationEngine = LocationEngineProvider.getBestLocationEngine(MapActivity.this);
         locationEngine.getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
             @Override
             public void onSuccess(LocationEngineResult result) {
@@ -600,13 +616,16 @@ public class MapActivity extends AppCompatActivity {
 
                 if (location == null) {
                     setRoute.setEnabled(true);
-                    setRoute.setText("Set route");
-                    Toast.makeText(MapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+                    setRoute.setText(getString(R.string.set_route));
+                    Toast.makeText(MapActivity.this, getString(R.string.unable_to_get_location), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
+                // Ẩn searchLayout
+                searchLayout.setVisibility(View.GONE);
+
                 setRoute.setEnabled(false);
-                setRoute.setText("Fetching route...");
+                setRoute.setText(getString(R.string.fetching_route));
 
                 RouteOptions.Builder builder = RouteOptions.builder()
                         .language("vi")
@@ -625,51 +644,51 @@ public class MapActivity extends AppCompatActivity {
                     @Override
                     public void onRoutesReady(@NonNull List<NavigationRoute> list, @NonNull RouterOrigin routerOrigin) {
                         if (list.isEmpty()) {
-                            Toast.makeText(MapActivity.this, "No route found", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MapActivity.this, getString(R.string.route_not_found), Toast.LENGTH_SHORT).show();
                             setRoute.setEnabled(true);
-                            setRoute.setText("Set route");
+                            setRoute.setText(getString(R.string.set_route));
                             return;
                         }
+                        isRouting = true;
                         NavigationRoute route = list.get(0);
                         mapboxNavigation.setNavigationRoutes(list);
                         focusLocationBtn.performClick();
                         setRoute.setEnabled(true);
-                        setRoute.setText("Set route");
+                        setRoute.setText(getString(R.string.set_route));
                         cancelRoute.setVisibility(View.VISIBLE);
 
                         String geometry = route.getDirectionsRoute().geometry();
-                        List<Point> routePoints = decodePolyline(geometry, 6); // Precision mặc định của Mapbox là 6
+                        List<Point> routePoints = decodePolyline(geometry, 6);
 
-                        // Log danh sách tọa độ
-                        for (int i = 0; i < routePoints.size(); i++) {
-                            Point point = routePoints.get(i);
-                            Log.d("RoutePoints", "Point " + i + ": " + point.latitude() + ", " + point.longitude());
-                        }
-
-                        // Gọi kiểm tra ổ gà
                         checkPotholesOnRoute(routePoints);
 
                         cancelRoute.setOnClickListener(view -> {
                             mapboxNavigation.setNavigationRoutes(Collections.emptyList());
                             cancelRoute.setVisibility(View.GONE);
+                            routePotholes.clear();
+                            isRouting = false;
                             selectedPointAnnotationManager.deleteAll();
-                            Toast.makeText(MapActivity.this, "Route canceled", Toast.LENGTH_SHORT).show();
+
+                            // Hiển thị lại searchLayout khi hủy route
+                            searchLayout.setVisibility(View.VISIBLE);
+
+                            Toast.makeText(MapActivity.this, getString(R.string.route_canceled), Toast.LENGTH_SHORT).show();
                         });
                     }
 
                     @Override
                     public void onFailure(@NonNull List<RouterFailure> list, @NonNull RouteOptions routeOptions) {
                         setRoute.setEnabled(true);
-                        setRoute.setText("Set route");
+                        setRoute.setText(getString(R.string.set_route));
                         cancelRoute.setVisibility(View.GONE);
-                        String errorMessage = list.isEmpty() ? "Unknown error" : list.get(0).getMessage();
-                        Toast.makeText(MapActivity.this, "Route request failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+                        String errorMessage = list.isEmpty() ? getString(R.string.unknown_error) : list.get(0).getMessage();
+                        Toast.makeText(MapActivity.this, getString(R.string.route_request_failed, errorMessage), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onCanceled(@NonNull RouteOptions routeOptions, @NonNull RouterOrigin routerOrigin) {
                         setRoute.setEnabled(true);
-                        setRoute.setText("Set route");
+                        setRoute.setText(getString(R.string.set_route));
                         cancelRoute.setVisibility(View.GONE);
                     }
                 });
@@ -678,9 +697,9 @@ public class MapActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 setRoute.setEnabled(true);
-                setRoute.setText("Set route");
+                setRoute.setText(getString(R.string.set_route));
                 cancelRoute.setVisibility(View.GONE);
-                Toast.makeText(MapActivity.this, "Location request failed: " + exception.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(MapActivity.this, getString(R.string.location_request_failed, exception.getMessage()), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -723,41 +742,33 @@ public class MapActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Pothole>> call, Response<List<Pothole>> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    routePotholes.clear();
                     List<Pothole> potholes = response.body();
-                    int potholeCount = 0;
-
-                    // Sử dụng Set để tránh đếm trùng
                     Set<Point> countedPotholes = new HashSet<>();
 
                     for (Pothole pothole : potholes) {
                         Point potholePoint = Point.fromLngLat(pothole.getLongitude(), pothole.getLatitude());
-
-                        // Kiểm tra ổ gà đã được đếm hay chưa
                         if (!countedPotholes.contains(potholePoint)) {
                             for (int i = 0; i < routePoints.size() - 1; i++) {
                                 Point p1 = routePoints.get(i);
                                 Point p2 = routePoints.get(i + 1);
-
-                                // Kiểm tra nếu ổ gà gần đoạn đường [p1, p2]
-                                if (isPointNearSegment(potholePoint, p1, p2, 5)) { // Ngưỡng 10m
-                                    potholeCount++;
-                                    countedPotholes.add(potholePoint); // Đánh dấu ổ gà đã được đếm
+                                if (isPointNearSegment(potholePoint, p1, p2, 5)) {
+                                    routePotholes.add(pothole); // Lưu ổ gà vào danh sách
+                                    countedPotholes.add(potholePoint);
                                     break;
                                 }
                             }
                         }
                     }
-
-                    // Hiển thị kết quả
-                    Toast.makeText(MapActivity.this, "Có " + potholeCount + " ổ gà trên tuyến đường này!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(MapActivity.this, getString(R.string.potholes_on_route, routePotholes.size()), Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(MapActivity.this, "Không thể tải dữ liệu ổ gà!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MapActivity.this, getString(R.string.pothole_data_load_error), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<List<Pothole>> call, Throwable t) {
-                Toast.makeText(MapActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(MapActivity.this, getString(R.string.connection_error, t.getMessage()), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -786,22 +797,19 @@ public class MapActivity extends AppCompatActivity {
         }
 
         double distanceToSegment = haversine(p0.latitude(), p0.longitude(), nearestLat, nearestLon);
-
-        // Log khoảng cách để debug
         Log.d("DistanceCheck", "Khoảng cách ổ gà " + p0 + " tới đoạn [" + p1 + ", " + p2 + "] là: " + distanceToSegment);
-
         return distanceToSegment <= threshold;
     }
 
     private double haversine(double lat1, double lon1, double lat2, double lon2) {
-        final double R = 6371e3; // Bán kính Trái Đất (m)
+        final double R = 6371e3;
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
                 * Math.sin(dLon / 2) * Math.sin(dLon / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Khoảng cách tính bằng mét
+        return R * c;
     }
 
     private void loadPotholeMarkers() {
@@ -813,7 +821,6 @@ public class MapActivity extends AppCompatActivity {
             public void onResponse(Call<List<Pothole>> call, Response<List<Pothole>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<Pothole> potholes = response.body();
-
                     AnnotationPlugin annotationPlugin = AnnotationPluginImplKt.getAnnotations(mapView);
                     PointAnnotationManager pointAnnotationManager = PointAnnotationManagerKt.createPointAnnotationManager(annotationPlugin, mapView);
 
@@ -851,7 +858,7 @@ public class MapActivity extends AppCompatActivity {
 
     private void setupWebSocket() {
         try {
-            URI uri = new URI("wss://potholedetect-backend.onrender.com/pothole-updates");
+            URI uri = new URI("ws://BackendPothole-env.eba-eggp9dp7.ap-southeast-1.elasticbeanstalk.com/pothole-updates");
             webSocketClient = new PotholeWebSocketClient(uri, (latitude, longitude, severity) -> {
                 runOnUiThread(() -> addPotholeMarker(latitude, longitude, severity));
             });
@@ -878,25 +885,16 @@ public class MapActivity extends AppCompatActivity {
             public void onSensorChanged(SensorEvent event) {
                 switch (event.sensor.getType()) {
                     case Sensor.TYPE_ACCELEROMETER:
-                        // Bỏ trọng lực và làm mượt dữ liệu
                         float[] linearAcceleration = removeGravity(event.values);
-
-                        // Tính độ lớn gia tốc
                         float magnitude = calculateMagnitude(linearAcceleration);
-
-                        // Làm mượt độ lớn
                         float smoothedMagnitude = calculateSmoothedMagnitude(magnitude);
-
-                        // Kiểm tra góc quay từ con quay hồi chuyển
                         float gyroscopeMagnitude = calculateMagnitude(gyroscopeValues);
 
                         if (gyroscopeMagnitude < GYROSCOPE_THRESHOLD) {
                             long currentTime = System.currentTimeMillis();
-
                             if (!Float.isNaN(lastMagnitude)) {
                                 float deltaMagnitude = Math.abs(smoothedMagnitude - lastMagnitude);
                                 Log.d("PotholeDetection", "Delta Magnitude: " + deltaMagnitude);
-
                                 if (currentTime - lastDetectionTime > DETECTION_INTERVAL) {
                                     if (deltaMagnitude >= LEVEL_3_THRESHOLD) {
                                         triggerPotholeDetected("Cấp 3", deltaMagnitude);
@@ -911,7 +909,6 @@ public class MapActivity extends AppCompatActivity {
                                     }
                                 }
                             }
-
                             lastMagnitude = smoothedMagnitude;
                         } else {
                             Log.d("PotholeDetection", "Thiết bị đang xoay, bỏ qua sự kiện.");
@@ -925,14 +922,12 @@ public class MapActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {
-                // Không sử dụng trong phiên bản này
-            }
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {}
         };
     }
 
     private void triggerPotholeDetected(String level, float deltaMagnitude) {
-        int severity = 1; // Mặc định mức nhẹ
+        int severity = 1;
         switch (level) {
             case "Cấp 1":
                 severity = 1;
@@ -945,41 +940,33 @@ public class MapActivity extends AppCompatActivity {
                 break;
         }
 
-        // Lấy vị trí hiện tại
         Location lastLocation = navigationLocationProvider.getLastLocation();
         if (lastLocation == null) {
             runOnUiThread(() -> Toast.makeText(MapActivity.this, "Không thể lấy vị trí hiện tại!", Toast.LENGTH_SHORT).show());
             return;
         }
 
-        // Tạo các biến final
         final double latitude = lastLocation.getLatitude();
         final double longitude = lastLocation.getLongitude();
         final int finalSeverity = severity;
 
         runOnUiThread(() -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this);
-            builder.setTitle("Phát hiện ổ gà!");
-            builder.setMessage("Mức độ: " + level + "\nΔ: " + deltaMagnitude +
-                    "\nVị trí: (" + latitude + ", " + longitude + ")" +
-                    "\nBạn có muốn lưu thông tin này không?");
-            builder.setPositiveButton("Có", (dialog, which) -> {
-                // Lưu thông tin ổ gà vào database
+            builder.setTitle(getString(R.string.pothole_detected_title));
+            builder.setMessage(getString(R.string.pothole_detected_message, level, deltaMagnitude, latitude, longitude));
+            builder.setPositiveButton(getString(R.string.pothole_save_yes), (dialog, which) -> {
                 savePotholeToDatabase(latitude, longitude, finalSeverity);
             });
-            builder.setNegativeButton("Không", (dialog, which) -> dialog.dismiss());
+            builder.setNegativeButton(getString(R.string.pothole_save_no), (dialog, which) -> dialog.dismiss());
 
-            // Tạo AlertDialog
             AlertDialog dialog = builder.create();
             dialog.show();
-
-            // Tự động đóng hộp thoại sau 2 giây
             new Handler().postDelayed(dialog::dismiss, 2000);
         });
 
         Log.d("PotholeLevel", level + " | Δ: " + deltaMagnitude);
         lastDetectionTime = System.currentTimeMillis();
-        potholeStartTime = 0; // Reset thời gian ổ gà liên tiếp
+        potholeStartTime = 0;
     }
 
     private void savePotholeToDatabase(double latitude, double longitude, int severity) {
@@ -1024,7 +1011,6 @@ public class MapActivity extends AppCompatActivity {
         );
     }
 
-
     private float calculateSmoothedMagnitude(float newMagnitude) {
         if (magnitudeValues.size() >= WINDOW_SIZE) {
             magnitudeValues.poll();
@@ -1037,7 +1023,7 @@ public class MapActivity extends AppCompatActivity {
         return sum / magnitudeValues.size();
     }
 
-    private static final long MIN_POTHOLE_DURATION = 300; // Khoảng thời gian tối thiểu (ms)
+    private static final long MIN_POTHOLE_DURATION = 300;
 
     @Override
     protected void onDestroy() {
@@ -1049,8 +1035,8 @@ public class MapActivity extends AppCompatActivity {
             sensorManager.unregisterListener(sensorEventListener, accelerometer);
             sensorManager.unregisterListener(sensorEventListener, gyroscope);
         }
+        // Không cần unregisterLocationObserver vì không đăng ký
         mapboxNavigation.onDestroy();
         mapboxNavigation.unregisterRoutesObserver(routesObserver);
-        mapboxNavigation.unregisterLocationObserver(locationObserver);
     }
 }

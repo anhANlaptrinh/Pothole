@@ -1,5 +1,6 @@
 package com.example.pothole;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
@@ -67,6 +68,7 @@ public class LoginActivity extends AppCompatActivity {
 
     public void setupUI() {
         String sign_in_google = getString(R.string.sign_in_google);
+        String sign_up_email = getString(R.string.sign_up_email);
         googleSignUpButton = findViewById(R.id.container_another_step_google);
         Drawable googleIcon = getResources().getDrawable(R.drawable.image_google);
         googleIcon.setBounds(0, 0, googleIcon.getIntrinsicWidth(), googleIcon.getIntrinsicHeight());
@@ -79,7 +81,7 @@ public class LoginActivity extends AppCompatActivity {
         emailSignUpButton = findViewById(R.id.email_sign_up_button);
         Drawable logo = getResources().getDrawable(R.drawable.baseline_email_24);
         logo.setBounds(0, 0, logo.getIntrinsicWidth(), logo.getIntrinsicHeight());
-        SpannableString spannableString1 = new SpannableString("  Sign Up with Email");
+        SpannableString spannableString1 = new SpannableString("  " + sign_up_email);
         ImageSpan imageSpan1 = new ImageSpan(logo, ImageSpan.ALIGN_BOTTOM);
         spannableString1.setSpan(imageSpan1, 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         emailSignUpButton.setText(spannableString1);
@@ -218,15 +220,24 @@ public class LoginActivity extends AppCompatActivity {
         String password = textPasswordValue.getText().toString().trim();
 
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-            Toast.makeText(this, "Vui lòng nhập email và mật khẩu", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.enter_email_password), Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Hiển thị ProgressDialog
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage(getString(R.string.logging_in));
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
         ApiService apiService = ApiClient.getApiService();
         Call<User> call = apiService.login(email, password);
+
         call.enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
+                progressDialog.dismiss(); // Ẩn ProgressDialog khi có phản hồi
+
                 if (response.isSuccessful()) {
                     User user = response.body();
                     saveLoginInfo(user);
@@ -235,13 +246,14 @@ public class LoginActivity extends AppCompatActivity {
                     startActivity(intent);
                     finish();
                 } else {
-                    Toast.makeText(LoginActivity.this, "Đăng nhập thất bại: Tài khoản hoặc mật khẩu không chính xác", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, getString(R.string.login_failed), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                Toast.makeText(LoginActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                progressDialog.dismiss(); // Ẩn ProgressDialog khi có lỗi
+                Toast.makeText(LoginActivity.this, getString(R.string.connection_error, t.getMessage()), Toast.LENGTH_SHORT).show();
             }
         });
     }

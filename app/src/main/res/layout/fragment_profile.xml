@@ -50,7 +50,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:singleLine="true"
-                    android:text="Full Name"
+                    android:text="@string/fullname_hint"
                     android:textColor="#FF6C7278"
                     android:textSize="15dp" />
             </LinearLayout>
@@ -110,7 +110,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:singleLine="true"
-                    android:text="Email"
+                    android:text="@string/email_hint"
                     android:textColor="#FF6C7278"
                     android:textSize="15dp" />
             </LinearLayout>

@@ -54,16 +54,6 @@ public class RegisterActivity extends AppCompatActivity {
     public void setupUI() {
         create_account_button = findViewById(R.id.create_account_button);
         button_back = findViewById(R.id.button_back);
-
-        googleSignUpButton = findViewById(R.id.google_sign_up_button);
-        Drawable googleIcon = getResources().getDrawable(R.drawable.image_google);
-        googleIcon.setBounds(0, 0, googleIcon.getIntrinsicWidth(), googleIcon.getIntrinsicHeight());
-        SpannableString spannableString = new SpannableString("  Sign Up with Google");
-        ImageSpan imageSpan = new ImageSpan(googleIcon, ImageSpan.ALIGN_BOTTOM);
-        spannableString.setSpan(imageSpan, 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        googleSignUpButton.setText(spannableString);
-        googleSignUpButton.setGravity(Gravity.CENTER);
-
         textPasswordValue = findViewById(R.id.text_password_value);
         textRepasswordValue = findViewById(R.id.text_repassword_value);
         textUsernameValue = findViewById(R.id.username_input);
@@ -84,7 +74,7 @@ public class RegisterActivity extends AppCompatActivity {
         imgShowHidePassword1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isPasswordVisible) {
+                if (isPasswordVisible1) {
                     textPasswordValue.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
                     imgShowHidePassword1.setImageResource(R.drawable.ic_eye);
                 } else {
@@ -92,14 +82,14 @@ public class RegisterActivity extends AppCompatActivity {
                     imgShowHidePassword1.setImageResource(R.drawable.ic_eye_off);
                 }
                 textPasswordValue.setSelection(textPasswordValue.length());
-                isPasswordVisible = !isPasswordVisible;
+                isPasswordVisible1 = !isPasswordVisible1;
             }
         });
 
         imgShowHidePassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isPasswordVisible1) {
+                if (isPasswordVisible) {
                     textRepasswordValue.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
                     imgShowHidePassword.setImageResource(R.drawable.ic_eye);
                 } else {
@@ -107,7 +97,7 @@ public class RegisterActivity extends AppCompatActivity {
                     imgShowHidePassword.setImageResource(R.drawable.ic_eye_off);
                 }
                 textRepasswordValue.setSelection(textRepasswordValue.length());
-                isPasswordVisible1 = !isPasswordVisible1;
+                isPasswordVisible = !isPasswordVisible;
             }
         });
 

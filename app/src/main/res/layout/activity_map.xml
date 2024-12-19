@@ -40,7 +40,6 @@
                     android:elevation="4dp"
                     android:hint="Search"
                     android:background="@drawable/edittext_background"
-
                     android:id="@+id/searchLayout"
                     app:boxCornerRadiusBottomEnd="20sp"
                     app:boxCornerRadiusBottomStart="20sp"
@@ -81,7 +80,7 @@
                     app:backgroundTint="#00D084"
                     android:layout_marginBottom="105dp"
                     android:id="@+id/setRoute"
-                    android:text="Set Route" />
+                    android:text="@string/set_route" />
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:layout_width="wrap_content"

@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingTop="70dp"> <!-- Căn giữa toàn bộ LinearLayout trong FrameLayout -->
+        android:paddingTop="70dp">
 
         <!-- Logo and Title -->
         <LinearLayout
@@ -32,18 +32,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="Pothole Detector"
+                android:text="@string/app_name1"
                 android:textColor="#000000"
                 android:textSize="30sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Sign Up Title -->
+        <!-- Title -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingBottom="8dp"
-            android:text="FORGOT PASSWORD"
+            android:text="@string/forgot_password"
             android:textColor="#000000"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -55,7 +55,7 @@
             android:paddingBottom="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:text="It seems like there is no account associated with this email. Please check your email or sign up to create a new account."
+            android:text="@string/forgot_password_subtitle"
             android:textColor="#666666"
             android:textSize="15sp" />
 
@@ -68,7 +68,7 @@
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="8dp"
             android:background="@drawable/edittext_background"
-            android:hint="Email"
+            android:hint="@string/hint_email"
             android:inputType="textEmailAddress"
             android:padding="12dp"
             android:textColor="@color/black" />
@@ -84,7 +84,7 @@
             android:background="@drawable/ripple_button_background"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:text="SEND CODE"
+            android:text="@string/send_code"
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
 
@@ -96,7 +96,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:background="@drawable/edittext_background"
-            android:hint="Code"
+            android:hint="@string/code_hint"
             android:inputType="text"
             android:padding="12dp" />
 
@@ -116,7 +116,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@drawable/edittext_background"
-                android:hint="Password"
+                android:hint="@string/hint_password"
                 android:inputType="textPassword" />
 
             <ImageView
@@ -143,7 +143,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@drawable/edittext_background"
-                android:hint="Re-Password"
+                android:hint="@string/repassword_hint"
                 android:inputType="textPassword" />
 
             <ImageView
@@ -154,9 +154,6 @@
                 android:src="@drawable/ic_eye_off" />
         </LinearLayout>
 
-        <!-- Terms and Conditions -->
-
-        <!-- Create Account Button -->
         <Button
             android:id="@+id/reset_password"
             android:layout_width="match_parent"
@@ -168,11 +165,9 @@
             android:background="@drawable/ripple_button_background"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:text="RESET PASSWORD"
+            android:text="@string/reset_password"
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
-
-        <!-- OR Divider -->
 
         <ImageButton
             android:layout_width="40dp"

@@ -90,11 +90,11 @@ public class ProfileFragment extends Fragment {
                     imgAvatar.setImageBitmap(decodedBitmap);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    imgAvatar.setImageResource(R.drawable.avatar_default);
+                    imgAvatar.setImageResource(R.drawable.ic_avatar_default);
                 }
             }
         } else {
-            imgAvatar.setImageResource(R.drawable.avatar_default);
+            imgAvatar.setImageResource(R.drawable.ic_avatar_default);
         }
     }
 

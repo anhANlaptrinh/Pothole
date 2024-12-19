@@ -621,7 +621,6 @@ public class MapActivity extends AppCompatActivity {
                     return;
                 }
 
-                // Ẩn searchLayout
                 searchLayout.setVisibility(View.GONE);
 
                 setRoute.setEnabled(false);
@@ -662,6 +661,45 @@ public class MapActivity extends AppCompatActivity {
 
                         checkPotholesOnRoute(routePoints);
 
+                        // Liên tục cập nhật vị trí để kiểm tra khoảng cách tới đích
+                        LocationEngineRequest locationEngineRequest = new LocationEngineRequest.Builder(1000L) // 1000ms
+                                .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+                                .setMaxWaitTime(2000L) // 2000ms, thời gian tối đa trước khi chờ
+                                .build();
+
+                        locationEngine.requestLocationUpdates(
+                                locationEngineRequest,
+                                new LocationEngineCallback<LocationEngineResult>() {
+                                    @Override
+                                    public void onSuccess(LocationEngineResult result) {
+                                        Location currentLocation = result.getLastLocation();
+                                        if (currentLocation != null) {
+                                            Point currentPoint = Point.fromLngLat(currentLocation.getLongitude(), currentLocation.getLatitude());
+                                            double distance = TurfMeasurement.distance(currentPoint, destination);
+
+                                            if (distance < 0.05) { // Ngưỡng 50 mét
+                                                Toast.makeText(MapActivity.this, getString(R.string.route_completed), Toast.LENGTH_SHORT).show();
+                                                mapboxNavigation.setNavigationRoutes(Collections.emptyList());
+                                                cancelRoute.setVisibility(View.GONE);
+                                                routePotholes.clear();
+                                                isRouting = false;
+                                                selectedPointAnnotationManager.deleteAll();
+
+                                                searchLayout.setVisibility(View.VISIBLE);
+
+                                                locationEngine.removeLocationUpdates(this);
+                                            }
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(@NonNull Exception exception) {
+                                        Toast.makeText(MapActivity.this, getString(R.string.location_request_failed, exception.getMessage()), Toast.LENGTH_SHORT).show();
+                                    }
+                                },
+                                getMainLooper()
+                        );
+
                         cancelRoute.setOnClickListener(view -> {
                             mapboxNavigation.setNavigationRoutes(Collections.emptyList());
                             cancelRoute.setVisibility(View.GONE);
@@ -669,7 +707,6 @@ public class MapActivity extends AppCompatActivity {
                             isRouting = false;
                             selectedPointAnnotationManager.deleteAll();
 
-                            // Hiển thị lại searchLayout khi hủy route
                             searchLayout.setVisibility(View.VISIBLE);
 
                             Toast.makeText(MapActivity.this, getString(R.string.route_canceled), Toast.LENGTH_SHORT).show();

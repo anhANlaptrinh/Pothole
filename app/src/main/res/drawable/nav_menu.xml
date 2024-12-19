@@ -10,42 +10,42 @@
         <item
             android:id="@+id/nav_home"
             android:icon="@drawable/baseline_home_24"
-            android:title="Home" />
+            android:title="@string/menu_home" />
 
         <item
             android:id="@+id/nav_about"
             android:icon="@drawable/baseline_info_24"
-            android:title="About Us" />
+            android:title="@string/menu_about_us" />
 
         <item
             android:id="@+id/nav_share"
             android:icon="@drawable/baseline_share_24"
-            android:title="Share" />
+            android:title="@string/menu_share" />
 
         <item
             android:id="@+id/nav_settings"
             android:icon="@drawable/baseline_settings_24"
-            android:title="Settings" />
+            android:title="@string/menu_settings" />
 
     </group>
 
     <item
         android:id="@+id/nav_account"
-        android:title="Account">
+        android:title="@string/menu_account">
 
         <menu>
             <item
                 android:id="@+id/nav_profile"
                 android:icon="@drawable/baseline_person_24"
-                android:title="My Profile" />
+                android:title="@string/menu_profile" />
             <item
                 android:id="@+id/nav_edit_profile"
                 android:icon="@drawable/lock"
-                android:title="Change Password" />
+                android:title="@string/menu_change_password" />
             <item
                 android:id="@+id/nav_logout"
                 android:icon="@drawable/baseline_exit_to_app_24"
-                android:title="Logout" />
+                android:title="@string/menu_logout" />
         </menu>
     </item>
 

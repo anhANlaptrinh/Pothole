@@ -1,5 +1,6 @@
 package com.example.pothole;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -116,9 +117,15 @@ public class RegisterActivity extends AppCompatActivity {
         String email = textEmailValue.getText().toString().trim();
 
         if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password) || TextUtils.isEmpty(email)) {
-            Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.enter_all_fields), Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // Hiển thị ProgressDialog
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage(getString(R.string.registering));
+        progressDialog.setCancelable(false);
+        progressDialog.show();
 
         ApiService apiService = ApiClient.getApiService();
         User newUser = new User(username, password, email);
@@ -127,25 +134,27 @@ public class RegisterActivity extends AppCompatActivity {
         call.enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
+                progressDialog.dismiss();
                 if (response.isSuccessful()) {
-                    Toast.makeText(RegisterActivity.this, "Đăng ký thành công!", Toast.LENGTH_SHORT).show();
-                    // Chuyển đến màn hình đăng nhập hoặc màn hình chính sau khi đăng ký
+                    Toast.makeText(RegisterActivity.this, getString(R.string.register_success), Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                    finish();
                 } else {
                     try {
-                        // Lấy thông báo lỗi từ phản hồi của server
-                        String errorMessage = response.errorBody() != null ? response.errorBody().string() : "Đăng ký thất bại";
+                        String errorMessage = response.errorBody() != null ? response.errorBody().string() : getString(R.string.register_failed);
                         Toast.makeText(RegisterActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                     } catch (Exception e) {
                         e.printStackTrace();
-                        Toast.makeText(RegisterActivity.this, "Đăng ký thất bại", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RegisterActivity.this, getString(R.string.register_failed), Toast.LENGTH_SHORT).show();
                     }
                 }
             }
 
-
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                Toast.makeText(RegisterActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                progressDialog.dismiss();
+                Toast.makeText(RegisterActivity.this, getString(R.string.connection_error, t.getMessage()), Toast.LENGTH_SHORT).show();
             }
         });
     }

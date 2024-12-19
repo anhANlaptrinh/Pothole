@@ -38,7 +38,7 @@
                     android:layout_marginStart="10sp"
                     android:layout_marginEnd="10sp"
                     android:elevation="4dp"
-                    android:hint="Search"
+                    android:hint="@string/search_hint"
                     android:background="@drawable/edittext_background"
                     android:id="@+id/searchLayout"
                     app:boxCornerRadiusBottomEnd="20sp"

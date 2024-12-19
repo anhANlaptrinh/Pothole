@@ -49,9 +49,9 @@ public class SettingsFragment extends Fragment {
 
         btn_logout.setOnClickListener(v -> {
             new AlertDialog.Builder(requireContext())
-                    .setTitle("Logout")
-                    .setMessage("Are you sure you want to logout?")
-                    .setPositiveButton("Yes", (dialog, which) -> {
+                    .setTitle(getString(R.string.menu_logout))
+                    .setMessage(getString(R.string.logout_confirmation_message))
+                    .setPositiveButton(getString(R.string.pothole_save_yes), (dialog, which) -> {
                         SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("LoginPrefs", requireActivity().MODE_PRIVATE);
                         SharedPreferences.Editor editor = sharedPreferences.edit();
                         editor.clear();
@@ -59,9 +59,10 @@ public class SettingsFragment extends Fragment {
                         requireActivity().finishAffinity();
                         startActivity(new Intent(requireActivity(), LoginActivity.class));
                     })
-                    .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+                    .setNegativeButton(getString(R.string.pothole_save_no), (dialog, which) -> dialog.dismiss()) // "No" đa ngôn ngữ
                     .show();
         });
+
 
         changepassword.setOnClickListener(view1 -> replaceFragment(new ChangePasswordFragment()));
 
@@ -70,7 +71,7 @@ public class SettingsFragment extends Fragment {
         btn_selectlanguage.setOnClickListener(v -> {
             final String[] languages = {"English", "Tiếng Việt", "Português"};
             new AlertDialog.Builder(requireContext())
-                    .setTitle("Select Language")
+                    .setTitle(getString(R.string.select_language_title))
                     .setItems(languages, (dialog, which) -> {
                         String selectedLanguage = which == 0 ? "en" : which == 1 ? "vi" : "pt";
                         setLocale(selectedLanguage);
@@ -103,11 +104,11 @@ public class SettingsFragment extends Fragment {
                     imgAvatar.setImageBitmap(decodedBitmap);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    imgAvatar.setImageResource(R.drawable.avatar_default);
+                    imgAvatar.setImageResource(R.drawable.ic_avatar_default);
                 }
             }
         } else {
-            imgAvatar.setImageResource(R.drawable.avatar_default);
+            imgAvatar.setImageResource(R.drawable.ic_avatar_default);
         }
     }
 

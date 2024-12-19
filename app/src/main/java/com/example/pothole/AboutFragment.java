@@ -90,7 +90,6 @@ public class AboutFragment extends Fragment {
         level2 = view.findViewById(R.id.level2);
         level3 = view.findViewById(R.id.level3);
         PotholeCount = view.findViewById(R.id.potholeCount);
-        userGreeting.setText("Hello, HuynhAn");
         updateDate();
         loadUserInfo();
         initializeLocationEngine();
@@ -244,7 +243,6 @@ public class AboutFragment extends Fragment {
         }
     }
 
-    // Lớp phản hồi thời tiết cho Gson
     static class WeatherResponse {
         Main main;
         Weather[] weather;
@@ -279,11 +277,11 @@ public class AboutFragment extends Fragment {
                     UserAvatar.setImageBitmap(decodedBitmap);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    UserAvatar.setImageResource(R.drawable.avatar_default);
+                    UserAvatar.setImageResource(R.drawable.ic_avatar_default);
                 }
             }
         } else {
-            UserAvatar.setImageResource(R.drawable.avatar_default);
+            UserAvatar.setImageResource(R.drawable.ic_avatar_default);
         }
     }
 

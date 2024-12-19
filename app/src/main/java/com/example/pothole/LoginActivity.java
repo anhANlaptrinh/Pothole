@@ -112,7 +112,7 @@ public class LoginActivity extends AppCompatActivity {
         text_forgot_password.setOnClickListener(view -> {
             String email = textEmailValue.getText().toString().trim();
             if (TextUtils.isEmpty(email)) {
-                Toast.makeText(LoginActivity.this, "Vui lòng nhập email", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, getString(R.string.enter_email), Toast.LENGTH_SHORT).show();
             } else {
                 ApiService apiService = ApiClient.getApiService();
                 Call<Boolean> call = apiService.checkEmailExists(email);
@@ -124,13 +124,13 @@ public class LoginActivity extends AppCompatActivity {
                             intent.putExtra("email", email);
                             startActivity(intent);
                         } else {
-                            Toast.makeText(LoginActivity.this, "Email không tồn tại", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, getString(R.string.email_not_found), Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onFailure(Call<Boolean> call, Throwable t) {
-                        Toast.makeText(LoginActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, getString(R.string.connection_error) + t.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -181,12 +181,12 @@ public class LoginActivity extends AppCompatActivity {
                 if (idToken != null) {
                     loginWithGoogle(idToken); // Dùng token để gọi API
                 } else {
-                    Toast.makeText(this, "Không lấy được idToken từ Google Sign-In.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.google_sign_in_failed), Toast.LENGTH_SHORT).show();
                 }
             }
         } catch (ApiException e) {
             Log.w("LoginActivity", "signInResult:failed code=" + e.getStatusCode());
-            Toast.makeText(this, "Đăng nhập Google thất bại.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.google_sign_in_failed), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -204,13 +204,13 @@ public class LoginActivity extends AppCompatActivity {
                     startActivity(intent);
                     finish();
                 } else {
-                    Toast.makeText(LoginActivity.this, "Đăng nhập Google thất bại.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, getString(R.string.google_sign_in_failed), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                Toast.makeText(LoginActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, getString(R.string.google_sign_in_failed), Toast.LENGTH_SHORT).show();
             }
         });
     }

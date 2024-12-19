@@ -37,10 +37,8 @@
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-
         </LinearLayout>
 
-        <!-- Phần Thời tiết và Ngày tháng (2 CardView ngang) -->
         <LinearLayout
             android:id="@+id/weatherDateCards"
             android:layout_width="match_parent"
@@ -55,7 +53,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginBottom="8dp"
-                android:text="Weather"
+                android:text="@string/weather"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -94,7 +92,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="Loading..."
+                            android:text="@string/loading"
                             android:textColor="@android:color/black"
                             android:textSize="16sp" />
 
@@ -102,7 +100,7 @@
                             android:id="@+id/weatherTemperature"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Loading..."
+                            android:text="@string/loading"
                             android:textColor="@android:color/black"
                             android:textSize="20sp"
                             android:textStyle="bold" />
@@ -167,7 +165,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
-                android:text="Location"
+                android:text="@string/location"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -199,7 +197,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="Loading..."
+                        android:text="@string/loading"
                         android:textColor="@android:color/black"
                         android:textSize="16sp" />
                 </LinearLayout>
@@ -209,7 +207,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
-                android:text="Overview"
+                android:text="@string/overview"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -259,7 +257,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="Pothole"
+                            android:text="@string/pothole"
                             android:textColor="@android:color/black"
                             android:textSize="25sp"
                             android:gravity="center" />
@@ -302,7 +300,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="2"
-                            android:text="Level 1"
+                            android:text="@string/level1"
                             android:textSize="16sp"
                             android:textColor="@android:color/black" />
                     </LinearLayout>
@@ -336,7 +334,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="2"
-                            android:text="Level 2"
+                            android:text="@string/level2"
                             android:textSize="16sp"
                             android:textColor="@android:color/black" />
                     </LinearLayout>
@@ -370,7 +368,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="2"
-                            android:text="Level 3"
+                            android:text="@string/level3"
                             android:textSize="16sp"
                             android:textColor="@android:color/black" />
                     </LinearLayout>

@@ -265,7 +265,7 @@ public class MapActivity extends AppCompatActivity {
                         pothole.getLatitude(),
                         pothole.getLongitude());
                 String potholeKey = pothole.getLatitude() + "," + pothole.getLongitude();
-                if (distance < 25 && !alertedPotholes.contains(potholeKey)) {
+                if (distance < 40 && !alertedPotholes.contains(potholeKey)) {
                     alertedPotholes.add(potholeKey);
                     triggerPotholeAlert();
                 }
@@ -689,14 +689,15 @@ public class MapActivity extends AppCompatActivity {
                                             Point currentPoint = Point.fromLngLat(currentLocation.getLongitude(), currentLocation.getLatitude());
                                             double distance = TurfMeasurement.distance(currentPoint, destination);
 
-                                            if (distance < 0.05) { // Ngưỡng 50 mét
+                                            if (distance < 0.01) { // Ngưỡng 50 mét
                                                 Toast.makeText(MapActivity.this, getString(R.string.route_completed), Toast.LENGTH_SHORT).show();
                                                 mapboxNavigation.setNavigationRoutes(Collections.emptyList());
                                                 cancelRoute.setVisibility(View.GONE);
                                                 routePotholes.clear();
+                                                alertedPotholes.clear();
                                                 isRouting = false;
                                                 selectedPointAnnotationManager.deleteAll();
-
+                                                loadPotholeMarkers();
                                                 searchLayout.setVisibility(View.VISIBLE);
 
                                                 locationEngine.removeLocationUpdates(this);

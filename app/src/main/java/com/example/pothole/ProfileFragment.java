@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,7 +42,7 @@ import retrofit2.Response;
 public class ProfileFragment extends Fragment {
 
     private static final int PICK_IMAGE_REQUEST = 1;
-
+    private Fragment currentFragment;
     private ImageView imgAvatar;
     private EditText edtFullName;
     private TextView tvEmail, fullname1;
@@ -64,7 +65,10 @@ public class ProfileFragment extends Fragment {
         sharedPreferences = requireActivity().getSharedPreferences("LoginPrefs", requireActivity().MODE_PRIVATE);
 
         loadUserInfo();
-
+        ImageButton btnBack = view.findViewById(R.id.button_back);
+        btnBack.setOnClickListener(v -> {
+            requireActivity().getSupportFragmentManager().popBackStack();
+        });
         imgAvatar.setOnClickListener(v -> openGallery());
         btnUpdateProfile.setOnClickListener(v -> updateProfile());
 
@@ -173,11 +177,24 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    private void replaceFragment(Fragment fragment) {
-        FragmentManager fragmentManager = getParentFragmentManager();
+    private void replaceFragment(Fragment newFragment) {
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, fragment);
-        fragmentTransaction.addToBackStack(null);
-        fragmentTransaction.commit();
+
+        // Ẩn Fragment hiện tại nếu có
+        if (currentFragment != null) {
+            fragmentTransaction.hide(currentFragment);
+        }
+
+        // Hiển thị hoặc thêm Fragment mới
+        if (!newFragment.isAdded()) {
+            fragmentTransaction.add(R.id.frame_layout, newFragment);
+        } else {
+            fragmentTransaction.show(newFragment);
+        }
+
+        // Cập nhật Fragment hiện tại
+        currentFragment = newFragment;
+        fragmentTransaction.commitAllowingStateLoss(); // Dùng commitAllowingStateLoss để xử lý an toàn
     }
 }

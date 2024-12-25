@@ -133,7 +133,6 @@ public class AboutFragment extends Fragment {
         radiusSeekBar = view.findViewById(R.id.radiusSeekBar);
         selectedRadius = view.findViewById(R.id.selectedRadius);
         nearbyPotholesInfo = view.findViewById(R.id.nearbyPotholesInfo);
-
         selectedRadius.setText(getString(R.string.distance_label, currentRadius));
         radiusSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -577,4 +576,23 @@ public class AboutFragment extends Fragment {
 
         return distance <= radius;
     }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser && isResumed()) {
+            // Chỉ thực hiện khi Fragment được hiển thị
+            loadUserInfo();
+            initializeLocationEngine();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (locationEngine != null) {
+            locationEngine.removeLocationUpdates(locationEngineCallback);
+        }
+    }
+
 }

@@ -21,16 +21,19 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Lifecycle;
 
 import com.bumptech.glide.Glide;
 
+import java.util.List;
 import java.util.Locale;
 
 public class SettingsFragment extends Fragment {
 
     private TextView tvName, tvEmail;
     private ImageView imgAvatar;
-    private LinearLayout btn_edtprofile, changepassword, btn_selectlanguage, btn_logout;
+    private LinearLayout btn_edtprofile, changepassword, btn_selectlanguage, btn_logout, btnAbout;
+    private Fragment currentFragment;
 
     @Nullable
     @Override
@@ -44,8 +47,24 @@ public class SettingsFragment extends Fragment {
         changepassword = view.findViewById(R.id.changepassword);
         btn_selectlanguage = view.findViewById(R.id.btn_selectlanguage);
         btn_logout = view.findViewById(R.id.btn_logout);
+        btnAbout = view.findViewById(R.id.btn_about);
         loadUserInfo();
         changepassword.setOnClickListener(view1 -> replaceFragment(new ChangePasswordFragment()));
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            requireActivity().getWindow().setStatusBarColor(requireContext().getResources().getColor(R.color.my_light_primary, requireContext().getTheme()));
+        }
+
+        // Nếu cần đặt kiểu văn bản/icon cho Status Bar
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            requireActivity().getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR); // Văn bản/icon màu đen
+        }
+        btnAbout.setOnClickListener(v -> { // Đổi tên biến thành "v"
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext()); // Sử dụng requireContext()
+            builder.setTitle(getString(R.string.about_app))
+                    .setMessage(getString(R.string.about_app_message))
+                    .setPositiveButton(getString(R.string.ok), (dialog, which) -> dialog.dismiss())
+                    .show();
+        });
 
         btn_logout.setOnClickListener(v -> {
             new AlertDialog.Builder(requireContext())
@@ -111,10 +130,10 @@ public class SettingsFragment extends Fragment {
 
     private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getParentFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, fragment);
-        fragmentTransaction.addToBackStack(null);
-        fragmentTransaction.commit();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.replace(R.id.frame_layout, fragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
     }
 
     private void setLocale(String languageCode) {
@@ -128,5 +147,13 @@ public class SettingsFragment extends Fragment {
         config.setLocale(locale);
         requireActivity().getResources().updateConfiguration(config, requireActivity().getResources().getDisplayMetrics());
         requireActivity().recreate();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            requireActivity().getWindow().setStatusBarColor(requireContext().getResources().getColor(R.color.my_light_primary, requireContext().getTheme()));
+        }
     }
 }

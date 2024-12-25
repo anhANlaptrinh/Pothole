@@ -2,11 +2,14 @@ package com.example.pothole;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -18,7 +21,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
     BottomNavigationView bottomNavigationView;
-
+    private Fragment currentFragment;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
@@ -28,8 +31,9 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
-        if (savedInstanceState == null){
+        if (savedInstanceState == null) {
             String openFragment = getIntent().getStringExtra("openFragment");
             if (openFragment != null) {
                 switch (openFragment) {
@@ -45,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
                         bottomNavigationView.setSelectedItemId(R.id.home);
                         break;
                 }
+            } else {
+                bottomNavigationView.setSelectedItemId(R.id.about);
+                replaceFragment(new AboutFragment());
             }
         }
 
@@ -62,10 +69,24 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void replaceFragment(Fragment fragment) {
+    private void replaceFragment(Fragment newFragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, fragment);
-        fragmentTransaction.commit();
+
+        // Ẩn Fragment hiện tại nếu có
+        if (currentFragment != null) {
+            fragmentTransaction.hide(currentFragment);
+        }
+
+        // Hiển thị hoặc thêm Fragment mới
+        if (!newFragment.isAdded()) {
+            fragmentTransaction.add(R.id.frame_layout, newFragment);
+        } else {
+            fragmentTransaction.show(newFragment);
+        }
+
+        // Cập nhật Fragment hiện tại
+        currentFragment = newFragment;
+        fragmentTransaction.commitAllowingStateLoss();
     }
 }

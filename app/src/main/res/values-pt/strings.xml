@@ -132,4 +132,8 @@
         <item>@string/filter_medium</item>
         <item>@string/filter_high</item>
     </string-array>
+    <string name="about_app">Thông tin ứng dụng</string>
+    <string name="about_app_message">Đây là ứng dụng mẫu để học phát triển Android. Phiên bản: 1.0.0</string>
+    <string name="profile1">PERFIL</string>
+    <string name="update">Atualizar</string>
 </resources>

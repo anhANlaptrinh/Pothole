@@ -168,10 +168,22 @@
             android:paddingTop="10dp"
             android:paddingRight="24dp"
             android:paddingBottom="10dp"
-            android:text="Update"
+            android:text="@string/update"
             android:background="@drawable/ripple_button_background"
             android:textColor="#FFFFFF"
             android:textStyle="bold"
+            app:backgroundTint="#00D084" />
+
+        <ImageButton
+            android:id="@+id/button_back"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="30dp"
+            android:background="@drawable/ripple_button_background"
+            android:contentDescription="@string/back"
+            android:gravity="center"
+            android:src="@drawable/baseline_arrow_back_24"
             app:backgroundTint="#00D084" />
 
 </LinearLayout>

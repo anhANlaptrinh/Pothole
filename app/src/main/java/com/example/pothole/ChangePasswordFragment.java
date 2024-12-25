@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,10 +48,13 @@ public class ChangePasswordFragment extends Fragment {
         imgAvatar = view.findViewById(R.id.img_avatar);
         user = view.findViewById(R.id.user);
         loadUserInfo();
+        ImageButton btnBack = view.findViewById(R.id.button_back);
+        btnBack.setOnClickListener(v -> {
+            requireActivity().getSupportFragmentManager().popBackStack(); // Quay lại fragment trước đó
+        });
         imgShowHidePassword = view.findViewById(R.id.img_show_hide_password);
         edtReNewPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         imgShowHidePassword.setImageResource(R.drawable.ic_eye_off);
-
         imgShowHidePassword1 = view.findViewById(R.id.img_show_hide_password1);
         edtNewPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         imgShowHidePassword1.setImageResource(R.drawable.ic_eye_off);

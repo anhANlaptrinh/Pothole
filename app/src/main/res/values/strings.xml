@@ -116,4 +116,20 @@
     <string name="select_distance">Select distance</string>
     <string name="distance_label">Distance: %1$d meters</string>
     <string name="distance_label1">Distance: 500 meters</string>
+    <string name="pothole_details_title">Pothole Details</string>
+    <string name="pothole_location">Location</string>
+    <string name="pothole_severity">Severity</string>
+    <string name="ok">OK</string>
+    <string name="select_filter">Select Filter</string>
+    <string name="apply_filter">Apply</string>
+    <string name="filter_all">All</string>
+    <string name="filter_low">Low</string>
+    <string name="filter_medium">Medium</string>
+    <string name="filter_high">High</string>
+    <string-array name="severity_levels">
+        <item>@string/filter_all</item>
+        <item>@string/filter_low</item>
+        <item>@string/filter_medium</item>
+        <item>@string/filter_high</item>
+    </string-array>
 </resources>

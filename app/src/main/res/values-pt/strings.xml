@@ -116,4 +116,20 @@
     <string name="select_distance">Selecionar distância</string>
     <string name="distance_label">Distância: %1$d metros</string>
     <string name="distance_label1">Distância: 500 metros</string>
+    <string name="pothole_details_title">Detalhes do buraco</string>
+    <string name="pothole_location">Localização</string>
+    <string name="pothole_severity">Gravidade</string>
+    <string name="ok">OK</string>
+    <string name="select_filter">Selecionar filtro</string>
+    <string name="apply_filter">Aplicar</string>
+    <string name="filter_all">Todos</string>
+    <string name="filter_low">Baixo</string>
+    <string name="filter_medium">Médio</string>
+    <string name="filter_high">Alto</string>
+    <string-array name="severity_levels">
+        <item>@string/filter_all</item>
+        <item>@string/filter_low</item>
+        <item>@string/filter_medium</item>
+        <item>@string/filter_high</item>
+    </string-array>
 </resources>

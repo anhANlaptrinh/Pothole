@@ -116,4 +116,20 @@
     <string name="select_distance">Chọn khoảng cách</string>
     <string name="distance_label">Khoảng cách: %1$d mét</string>
     <string name="distance_label1">Khoảng cách: 500 mét</string>
+    <string name="pothole_details_title">Thông tin ổ gà</string>
+    <string name="pothole_location">Vị trí</string>
+    <string name="pothole_severity">Mức độ nghiêm trọng</string>
+    <string name="ok">Đồng ý</string>
+    <string name="select_filter">Chọn mức lọc</string>
+    <string name="apply_filter">Áp dụng</string>
+    <string name="filter_all">Tất cả</string>
+    <string name="filter_low">Nhẹ</string>
+    <string name="filter_medium">Trung bình</string>
+    <string name="filter_high">Nặng</string>
+    <string-array name="severity_levels">
+        <item>@string/filter_all</item>
+        <item>@string/filter_low</item>
+        <item>@string/filter_medium</item>
+        <item>@string/filter_high</item>
+    </string-array>
 </resources>

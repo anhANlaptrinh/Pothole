@@ -43,8 +43,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -72,6 +74,7 @@ import com.example.pothole.network.ApiClient;
 import com.example.pothole.network.ApiService;
 import com.example.pothole.network.PotholeWebSocketClient;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
@@ -160,6 +163,8 @@ public class MapActivity extends AppCompatActivity {
     private List<Pothole> routePotholes = new ArrayList<>();
     private boolean isRouting = false;
     MapView mapView;
+    private Set<String> alertedPotholes = new HashSet<>();
+    private FloatingActionButton filterButton;
     MaterialButton setRoute;
     private TextInputLayout searchLayout;
     BottomNavigationView bottomNavigationView;
@@ -259,9 +264,10 @@ public class MapActivity extends AppCompatActivity {
                         userLocation.getLongitude(),
                         pothole.getLatitude(),
                         pothole.getLongitude());
-                if (distance < 25) {
+                String potholeKey = pothole.getLatitude() + "," + pothole.getLongitude();
+                if (distance < 25 && !alertedPotholes.contains(potholeKey)) {
+                    alertedPotholes.add(potholeKey);
                     triggerPotholeAlert();
-                    return;
                 }
             }
         } else {
@@ -431,7 +437,8 @@ public class MapActivity extends AppCompatActivity {
                 AnnotationPluginImplKt.getAnnotations(mapView), mapView);
         cancelRoute.setVisibility(View.GONE);
         setRoute = findViewById(R.id.setRoute);
-
+        filterButton = findViewById(R.id.filterButton);
+        filterButton.setOnClickListener(v -> showFilterDialog());
         MapboxRouteLineOptions options = new MapboxRouteLineOptions.Builder(this)
                 .withRouteLineResources(new RouteLineResources.Builder().build())
                 .withRouteLineBelowLayerId(LocationComponentConstants.LOCATION_INDICATOR_LAYER).build();
@@ -706,13 +713,17 @@ public class MapActivity extends AppCompatActivity {
                         );
 
                         cancelRoute.setOnClickListener(view -> {
-                            mapboxNavigation.setNavigationRoutes(Collections.emptyList());
-                            cancelRoute.setVisibility(View.GONE);
+                            mapboxNavigation.setNavigationRoutes(Collections.emptyList()); // Xóa tuyến đường
+                            cancelRoute.setVisibility(View.GONE); // Ẩn nút hủy
                             routePotholes.clear();
-                            isRouting = false;
-                            selectedPointAnnotationManager.deleteAll();
+                            alertedPotholes.clear();
+                            isRouting = false; // Đặt trạng thái không định tuyến
+                            selectedPointAnnotationManager.deleteAll(); // Xóa điểm đánh dấu trên bản đồ
 
                             searchLayout.setVisibility(View.VISIBLE);
+
+                            // Hiển thị lại tất cả các ổ gà
+                            loadPotholeMarkers();
 
                             Toast.makeText(MapActivity.this, getString(R.string.route_canceled), Toast.LENGTH_SHORT).show();
                         });
@@ -794,7 +805,7 @@ public class MapActivity extends AppCompatActivity {
                             for (int i = 0; i < routePoints.size() - 1; i++) {
                                 Point p1 = routePoints.get(i);
                                 Point p2 = routePoints.get(i + 1);
-                                if (isPointNearSegment(potholePoint, p1, p2, 5)) {
+                                if (isPointNearSegment(potholePoint, p1, p2, 5)) { // Kiểm tra ổ gà gần đoạn đường
                                     routePotholes.add(pothole); // Lưu ổ gà vào danh sách
                                     countedPotholes.add(potholePoint);
                                     break;
@@ -802,6 +813,13 @@ public class MapActivity extends AppCompatActivity {
                             }
                         }
                     }
+
+                    // Chỉ hiển thị ổ gà trên tuyến đường
+                    runOnUiThread(() -> {
+                        potholePointAnnotationManager.deleteAll(); // Xóa toàn bộ marker cũ
+                        displayPotholes(routePotholes);
+                    });
+
                     Toast.makeText(MapActivity.this, getString(R.string.potholes_on_route, routePotholes.size()), Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(MapActivity.this, getString(R.string.pothole_data_load_error), Toast.LENGTH_SHORT).show();
@@ -934,12 +952,60 @@ public class MapActivity extends AppCompatActivity {
         });
     }
 
+    private void showFilterDialog() {
+        BottomSheetDialog filterDialog = new BottomSheetDialog(this);
+        View filterView = getLayoutInflater().inflate(R.drawable.filter_layout, null);
+        filterDialog.setContentView(filterView);
+
+        Spinner severitySpinner = filterView.findViewById(R.id.severitySpinner);
+        Button applyFilterButton = filterView.findViewById(R.id.applyFilterButton);
+
+        applyFilterButton.setOnClickListener(v -> {
+            String selectedFilter = severitySpinner.getSelectedItem().toString();
+            filterPotholes(selectedFilter);
+            filterDialog.dismiss();
+        });
+
+        filterDialog.show();
+    }
+
+    private void filterPotholes(String filter) {
+        Log.d("Filter", "Selected Filter: " + filter);
+
+        // Tải danh sách ổ gà từ local database
+        List<Pothole> allPotholes = loadPotholesFromLocal();
+        Log.d("Filter", "Total Potholes Count: " + allPotholes.size());
+
+        List<Pothole> filteredPotholes = new ArrayList<>();
+
+        // Kiểm tra bộ lọc
+        if (filter.equals(getString(R.string.filter_all))) {
+            // Nếu chọn "Tất cả", hiển thị tất cả ổ gà
+            filteredPotholes.addAll(allPotholes);
+        } else {
+            for (Pothole pothole : allPotholes) {
+                if ((filter.equals(getString(R.string.filter_low)) && pothole.getSeverity() == 1) ||
+                        (filter.equals(getString(R.string.filter_medium)) && pothole.getSeverity() == 2) ||
+                        (filter.equals(getString(R.string.filter_high)) && pothole.getSeverity() == 3)) {
+                    filteredPotholes.add(pothole);
+                }
+            }
+        }
+
+        Log.d("Filter", "Filtered Potholes Count: " + filteredPotholes.size());
+
+        // Hiển thị danh sách ổ gà đã lọc
+        displayPotholes(filteredPotholes);
+    }
+
     private void showPotholeDetails(Pothole pothole) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Thông tin ổ gà");
-        builder.setMessage("Vị trí: " + pothole.getLatitude() + ", " + pothole.getLongitude() + "\n" +
-                "Mức độ nghiêm trọng: " + pothole.getSeverity());
-        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
+        builder.setTitle(getString(R.string.pothole_details_title));
+        builder.setMessage(
+                getString(R.string.pothole_location) + ": " + pothole.getLatitude() + ", " + pothole.getLongitude() + "\n" +
+                        getString(R.string.pothole_severity) + ": " + pothole.getSeverity()
+        );
+        builder.setPositiveButton(getString(R.string.ok), (dialog, which) -> dialog.dismiss());
         builder.show();
     }
 

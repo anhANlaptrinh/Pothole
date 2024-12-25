@@ -90,6 +90,15 @@
                     android:layout_alignParentEnd="true"
                     android:layout_above="@id/setRoute"
                     android:layout_margin="20sp" />
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/filterButton"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_filter"
+                    android:layout_above="@id/speedContainer"
+                    android:layout_alignEnd="@id/speedContainer"
+                    android:layout_marginBottom="16dp"
+                    app:elevation="4dp" />
 
                 <RelativeLayout
                     android:id="@+id/speedContainer"

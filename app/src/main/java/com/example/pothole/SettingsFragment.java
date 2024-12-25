@@ -44,8 +44,8 @@ public class SettingsFragment extends Fragment {
         changepassword = view.findViewById(R.id.changepassword);
         btn_selectlanguage = view.findViewById(R.id.btn_selectlanguage);
         btn_logout = view.findViewById(R.id.btn_logout);
-
         loadUserInfo();
+        changepassword.setOnClickListener(view1 -> replaceFragment(new ChangePasswordFragment()));
 
         btn_logout.setOnClickListener(v -> {
             new AlertDialog.Builder(requireContext())
@@ -62,9 +62,6 @@ public class SettingsFragment extends Fragment {
                     .setNegativeButton(getString(R.string.pothole_save_no), (dialog, which) -> dialog.dismiss()) // "No" đa ngôn ngữ
                     .show();
         });
-
-
-        changepassword.setOnClickListener(view1 -> replaceFragment(new ChangePasswordFragment()));
 
         btn_edtprofile.setOnClickListener(view12 -> replaceFragment(new ProfileFragment()));
 

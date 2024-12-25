@@ -100,4 +100,20 @@
     <string name="pothole">Buraco</string>
     <string name="saturday">Sábado</string>
     <string name="loading">Carregando...</string>
+    <string name="weather_unavailable">Dados meteorológicos indisponíveis</string>
+    <string name="location_unavailable">Não foi possível obter localização</string>
+    <string name="pothole_data_error">Erro ao processar dados de buracos</string>
+    <string name="hello_user">Olá, %1$s</string>
+    <string name="loading_location">Carregando localização...</string>
+    <string name="numbers">Números</string>
+    <string name="chart">Gráfico</string>
+    <string name="pothole_levels">Níveis de Buracos</string>
+    <string name="total">Total</string>
+    <string name="connection_error1">Erro de conexão: Não foi possível buscar dados.</string>
+    <string name="no_pothole_data">Sem dados de buracos!</string>
+    <string name="pothole_in_radius">Existem %1$d buracos no raio.</string>
+    <string name="api_error">Não foi possível carregar os dados de buracos!</string>
+    <string name="select_distance">Selecionar distância</string>
+    <string name="distance_label">Distância: %1$d metros</string>
+    <string name="distance_label1">Distância: 500 metros</string>
 </resources>

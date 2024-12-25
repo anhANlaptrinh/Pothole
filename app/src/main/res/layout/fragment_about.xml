@@ -10,7 +10,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
         <LinearLayout
@@ -213,15 +213,55 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Phần Bên trái 1 CardView, bên phải 3 CardView -->
+        <RadioGroup
+            android:id="@+id/radioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <RadioButton
+                android:id="@+id/radioNumbers"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/numbers"
+                android:checked="true" />
+
+            <RadioButton
+                android:id="@+id/radioChart"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chart" />
+        </RadioGroup>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="20dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
+
+            <com.github.mikephil.charting.charts.PieChart
+                android:id="@+id/pieChart"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:visibility="gone"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Số liệu Pothole -->
         <LinearLayout
+            android:id="@+id/numbersLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:weightSum="2"
-            android:padding="12dp">
+            android:layout_marginRight="12dp"
+            android:layout_marginLeft="12dp"
+            android:layout_marginBottom="12dp">
 
-            <!-- Bên trái chứa 1 CardView -->
+            <!-- Tổng số ổ gà -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -265,13 +305,14 @@
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
 
-            <!-- Bên phải chứa 3 CardView -->
+            <!-- Số liệu các cấp độ ổ gà -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
+                <!-- Level 1 -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -302,10 +343,11 @@
                             android:layout_weight="2"
                             android:text="@string/level1"
                             android:textSize="16sp"
-                            android:textColor="@android:color/black" />
+                            android:textColor="@color/original_button_color" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
+                <!-- Level 2 -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -336,10 +378,11 @@
                             android:layout_weight="2"
                             android:text="@string/level2"
                             android:textSize="16sp"
-                            android:textColor="@android:color/black" />
+                            android:textColor="@color/orange" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
+                <!-- Level 3 -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -370,10 +413,65 @@
                             android:layout_weight="2"
                             android:text="@string/level3"
                             android:textSize="16sp"
-                            android:textColor="@android:color/black" />
+                            android:textColor="@color/red" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
         </LinearLayout>
+        <!-- CardView hiển thị thông tin số lượng ổ gà gần vị trí hiện tại -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/nearbyPotholesCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Tiêu đề -->
+                <TextView
+                    android:id="@+id/nearbyPotholesLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/select_distance"
+                    android:textColor="@android:color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Hiển thị khoảng cách -->
+                <TextView
+                    android:id="@+id/selectedRadius"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/distance_label1"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- SeekBar để chọn khoảng cách -->
+                <SeekBar
+                    android:id="@+id/radiusSeekBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:progress="50"
+                    android:max="100" />
+
+                <!-- Hiển thị thông tin ổ gà -->
+                <TextView
+                    android:id="@+id/nearbyPotholesInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/loading"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:layout_marginTop="8dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
     </LinearLayout>
 </ScrollView>

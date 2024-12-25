@@ -1,7 +1,36 @@
 package com.example.pothole;
 
+import static android.location.Location.distanceBetween;
 import static android.webkit.URLUtil.isValidUrl;
 
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.SeekBar;
+import android.widget.TextView;
+
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.utils.ColorTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -53,14 +82,22 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class AboutFragment extends Fragment {
-    private TextView userGreeting, weatherCondition, weatherTemperature, dateDay, dateMonth, locationText, level1, level2, level3, PotholeCount;
+    private TextView userGreeting, weatherCondition, nearbyPotholesInfo, selectedRadius, weatherTemperature, dateDay, dateMonth, locationText, level1, level2, level3, PotholeCount;
     private ImageView weatherIcon, dateIcon, locationIcon, UserAvatar;
     private LocationEngine locationEngine;
     private LocationCallback locationEngineCallback;
+    private SeekBar radiusSeekBar;
     private final String WEATHER_API_KEY = "cdd4bd831d2d6fbf10fe92e701d0dbdf";
     private double cachedLatitude = 0.0;
     private double cachedLongitude = 0.0;
     private String cachedWeather = null;
+    private PieChart pieChart;
+    private final int DEFAULT_RADIUS = 500;
+    private int currentRadius = DEFAULT_RADIUS;
+    private LinearLayout numberLayout;
+    private RadioGroup radioGroup;
+    private static final String API_URL = "http://BackendPothole-env.eba-eggp9dp7.ap-southeast-1.elasticbeanstalk.com/api/pothole/list";
+    private RadioButton radioNumbers, radioChart;
     private OkHttpClient getOkHttpClient() {
         return new OkHttpClient.Builder()
                 .connectTimeout(60, TimeUnit.SECONDS) // Thời gian chờ kết nối
@@ -75,7 +112,6 @@ public class AboutFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_about, container, false);
 
-        // Ánh xạ view
         userGreeting = view.findViewById(R.id.userGreeting);
         weatherCondition = view.findViewById(R.id.weatherCondition);
         weatherTemperature = view.findViewById(R.id.weatherTemperature);
@@ -89,7 +125,44 @@ public class AboutFragment extends Fragment {
         level1 = view.findViewById(R.id.level1);
         level2 = view.findViewById(R.id.level2);
         level3 = view.findViewById(R.id.level3);
+        numberLayout = view.findViewById(R.id.numbersLayout);
         PotholeCount = view.findViewById(R.id.potholeCount);
+        radioGroup = view.findViewById(R.id.radioGroup);
+        numberLayout = view.findViewById(R.id.numbersLayout);
+        pieChart = view.findViewById(R.id.pieChart);
+        radiusSeekBar = view.findViewById(R.id.radiusSeekBar);
+        selectedRadius = view.findViewById(R.id.selectedRadius);
+        nearbyPotholesInfo = view.findViewById(R.id.nearbyPotholesInfo);
+
+        selectedRadius.setText(getString(R.string.distance_label, currentRadius));
+        radiusSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                currentRadius = progress * 10; // Cập nhật bán kính hiện tại
+                selectedRadius.setText(getString(R.string.distance_label, currentRadius));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // Không làm gì
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                fetchPotholes(currentRadius); // Gọi fetchPotholes với bán kính mới
+            }
+        });
+
+        radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.radioNumbers) {
+                numberLayout.setVisibility(View.VISIBLE);
+                pieChart.setVisibility(View.GONE);
+            } else if (checkedId == R.id.radioChart) {
+                numberLayout.setVisibility(View.GONE);
+                pieChart.setVisibility(View.VISIBLE);
+                setupPieChart(); // Cập nhật biểu đồ
+            }
+        });
         updateDate();
         loadUserInfo();
         initializeLocationEngine();
@@ -107,6 +180,7 @@ public class AboutFragment extends Fragment {
                 .build();
 
         locationEngine.requestLocationUpdates(request, locationEngineCallback, requireActivity().getMainLooper());
+        locationEngine.getLastLocation(locationEngineCallback);
     }
 
     private void updateWeather(double latitude, double longitude) {
@@ -118,8 +192,11 @@ public class AboutFragment extends Fragment {
             return;
         }
 
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences("AppSettings", Context.MODE_PRIVATE);
+        String language = sharedPreferences.getString("language", "en"); // Mặc định là tiếng Anh
+
         String url = "https://api.openweathermap.org/data/2.5/weather?lat=" + latitude +
-                "&lon=" + longitude + "&appid=" + WEATHER_API_KEY + "&units=metric";
+                "&lon=" + longitude + "&appid=" + WEATHER_API_KEY + "&units=metric&lang=" + language;
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(5, TimeUnit.SECONDS)
@@ -156,7 +233,7 @@ public class AboutFragment extends Fragment {
                             weatherTemperature.setText(temp + "°C");
                         });
                     } catch (Exception e) {
-                        updateUI(() -> weatherCondition.setText("Lỗi khi xử lý dữ liệu thời tiết"));
+                        updateUI(() -> weatherCondition.setText(getString(R.string.weather_unavailable)));
                         Log.e("WeatherAPI", "Error parsing response", e);
                     }
                 } else {
@@ -178,18 +255,21 @@ public class AboutFragment extends Fragment {
 
                 updateUI(() -> locationText.setText(location));
             } else {
-                updateUI(() -> locationText.setText("Không xác định vị trí"));
+                updateUI(() -> locationText.setText(getString(R.string.location_unavailable)));
             }
         } catch (IOException e) {
-            updateUI(() -> locationText.setText("Lỗi khi lấy vị trí"));
+            updateUI(() -> locationText.setText(getString(R.string.location_unavailable)));
             Log.e("Geocoder", "Error fetching location", e);
         }
     }
 
     private void updateDate() {
-        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
-        SimpleDateFormat monthFormat = new SimpleDateFormat("MMM yyyy", Locale.ENGLISH);
-
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences("AppSettings", Context.MODE_PRIVATE);
+        String language = sharedPreferences.getString("language", "en");
+        Locale locale = new Locale(language);
+        Locale.setDefault(locale);
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", locale);
+        SimpleDateFormat monthFormat = new SimpleDateFormat("MMM yyyy", locale);
         dateDay.setText(dayFormat.format(new Date()));
         dateMonth.setText(monthFormat.format(new Date()));
     }
@@ -227,8 +307,14 @@ public class AboutFragment extends Fragment {
                     double latitude = result.getLastLocation().getLatitude();
                     double longitude = result.getLastLocation().getLongitude();
 
+                    fragment.cachedLatitude = latitude;
+                    fragment.cachedLongitude = longitude;
+
                     fragment.updateWeather(latitude, longitude);
                     fragment.updateLocation(latitude, longitude);
+
+                    // Gọi fetchPotholes với bán kính hiện tại
+                    fragment.fetchPotholes(fragment.currentRadius);
                 }
             }
         }
@@ -237,7 +323,7 @@ public class AboutFragment extends Fragment {
         public void onFailure(@NonNull Exception exception) {
             AboutFragment fragment = fragmentRef.get();
             if (fragment != null && fragment.isAdded()) {
-                fragment.updateUI(() -> fragment.locationText.setText("Không thể lấy vị trí"));
+                fragment.updateUI(() -> fragment.locationText.setText("Unable to fetch location"));
                 Log.e("LocationEngine", "Error fetching location", exception);
             }
         }
@@ -262,7 +348,7 @@ public class AboutFragment extends Fragment {
         String name = sharedPreferences.getString("username", "Guest");
         String avatarString = sharedPreferences.getString("avatar", "");
 
-        userGreeting.setText("Hello"+", "+name);
+        userGreeting.setText(getString(R.string.hello_user, name));
 
         if (!avatarString.isEmpty()) {
             if (isValidUrl(avatarString)) {
@@ -286,7 +372,7 @@ public class AboutFragment extends Fragment {
     }
 
     private void PotholeCount() {
-        OkHttpClient client = getOkHttpClient(); // Sử dụng OkHttpClient với timeout tùy chỉnh
+        OkHttpClient client = getOkHttpClient();
 
         // Tạo yêu cầu HTTP
         Request request = new Request.Builder()
@@ -351,14 +437,144 @@ public class AboutFragment extends Fragment {
         });
     }
 
+    private void setupPieChart() {
+        int countLevel1 = parseSafeInt(level1.getText().toString());
+        int countLevel2 = parseSafeInt(level2.getText().toString());
+        int countLevel3 = parseSafeInt(level3.getText().toString());
+
+        // Chuẩn bị dữ liệu biểu đồ
+        List<PieEntry> entries = new ArrayList<>();
+        if (countLevel1 > 0) entries.add(new PieEntry(countLevel1, getString(R.string.level1)));
+        if (countLevel2 > 0) entries.add(new PieEntry(countLevel2, getString(R.string.level2)));
+        if (countLevel3 > 0) entries.add(new PieEntry(countLevel3, getString(R.string.level3)));
+
+        PieDataSet dataSet = new PieDataSet(entries, "");
+        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+        dataSet.setValueTextSize(16f);
+        dataSet.setValueTypeface(Typeface.DEFAULT_BOLD);
+
+        PieData data = new PieData(dataSet);
+        data.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return String.valueOf((int) value); // Hiển thị số nguyên
+            }
+        });
+
+        pieChart.setUsePercentValues(false);
+        pieChart.setData(data);
+        pieChart.setCenterText(getString(R.string.pothole_levels) + "\n" +
+                getString(R.string.total) + ": " + (countLevel1 + countLevel2 + countLevel3));
+        pieChart.setCenterTextSize(20f);
+        pieChart.setHoleRadius(50f);
+
+        pieChart.getDescription().setEnabled(false);
+
+        // Cấu hình chú thích
+        Legend legend = pieChart.getLegend();
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        legend.setTextSize(14f);
+        legend.setTypeface(Typeface.DEFAULT_BOLD);
+
+        pieChart.invalidate();
+    }
+
+    private int parseSafeInt(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            Log.e("ParseError", "Invalid number format: " + value);
+            return 0; // Giá trị mặc định nếu parse thất bại
+        }
+    }
+
+    private void fetchPotholes(int radius) {
+        Log.d("RadiusDebug", "Fetching potholes with radius: " + radius); // Log bán kính
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url(API_URL)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.e("PotholeAPI", "Lỗi kết nối: " + e.getMessage());
+                requireActivity().runOnUiThread(() ->
+                        nearbyPotholesInfo.setText(getString(R.string.connection_error1)));
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    String responseBody = response.body().string();
+                    List<Pothole> potholes = parsePotholeList(responseBody);
+
+                    if (potholes == null || potholes.isEmpty()) {
+                        requireActivity().runOnUiThread(() ->
+                                nearbyPotholesInfo.setText(getString(R.string.no_pothole_data)));
+                        return;
+                    }
+
+                    List<Pothole> filteredPotholes = filterPotholes(potholes, radius);
+
+                    requireActivity().runOnUiThread(() ->
+                            nearbyPotholesInfo.setText(getString(R.string.pothole_in_radius, filteredPotholes.size())));
+                } else {
+                    Log.e("PotholeAPI", "API trả về lỗi: " + response.code());
+                    requireActivity().runOnUiThread(() ->
+                            nearbyPotholesInfo.setText(getString(R.string.api_error)));
+                }
+            }
+        });
+    }
+
     private List<Pothole> parsePotholeList(String json) {
         try {
             Gson gson = new Gson();
             Type listType = new TypeToken<List<Pothole>>() {}.getType();
             return gson.fromJson(json, listType);
-        } catch (JsonSyntaxException e) {
-            Log.e("ParseError", "Lỗi parse JSON: " + e.getMessage());
-            return null; // Trả về null nếu parse thất bại
+        } catch (Exception e) {
+            Log.e("ParseError", "Lỗi phân tích JSON: " + e.getMessage());
+            return new ArrayList<>();
         }
+    }
+
+    private List<Pothole> filterExactLocation(List<Pothole> potholes) {
+        List<Pothole> filteredPotholes = new ArrayList<>();
+        for (Pothole pothole : potholes) {
+            if (Math.abs(cachedLatitude - pothole.getLatitude()) < 0.0001 &&
+                    Math.abs(cachedLongitude - pothole.getLongitude()) < 0.0001) {
+                filteredPotholes.add(pothole);
+            }
+        }
+        return filteredPotholes;
+    }
+
+    private List<Pothole> filterPotholes(List<Pothole> potholes, int radius) {
+        List<Pothole> filteredPotholes = new ArrayList<>();
+        for (Pothole pothole : potholes) {
+            if (isWithinRadius(cachedLatitude, cachedLongitude, pothole.getLatitude(), pothole.getLongitude(), radius)) {
+                filteredPotholes.add(pothole);
+            }
+        }
+        return filteredPotholes;
+    }
+
+    private boolean isWithinRadius(double lat1, double lon1, double lat2, double lon2, int radius) {
+        double earthRadius = 6371000; // Bán kính Trái Đất tính bằng mét
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = earthRadius * c;
+
+        return distance <= radius;
     }
 }

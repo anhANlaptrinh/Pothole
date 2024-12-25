@@ -49,5 +49,4 @@ public class SplashActivity extends AppCompatActivity {
         config.setLocale(locale);
         super.attachBaseContext(newBase.createConfigurationContext(config));
     }
-
 }

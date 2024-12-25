@@ -100,4 +100,20 @@
     <string name="pothole">Pothole</string>
     <string name="saturday">Saturday</string>
     <string name="loading">Loading...</string>
+    <string name="weather_unavailable">Weather data unavailable</string>
+    <string name="location_unavailable">Unable to fetch location</string>
+    <string name="pothole_data_error">Failed to process pothole data</string>
+    <string name="hello_user">Hello, %1$s</string>
+    <string name="loading_location">Loading location...</string>
+    <string name="numbers">Numbers</string>
+    <string name="chart">Chart</string>
+    <string name="pothole_levels">Pothole Levels</string>
+    <string name="total">Total</string>
+    <string name="connection_error1">Connection error: Unable to fetch data.</string>
+    <string name="no_pothole_data">No pothole data available!</string>
+    <string name="pothole_in_radius">There are %1$d potholes within the radius.</string>
+    <string name="api_error">Unable to fetch pothole data!</string>
+    <string name="select_distance">Select distance</string>
+    <string name="distance_label">Distance: %1$d meters</string>
+    <string name="distance_label1">Distance: 500 meters</string>
 </resources>

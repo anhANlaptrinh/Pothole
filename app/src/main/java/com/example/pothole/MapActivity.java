@@ -5,7 +5,7 @@ import static com.mapbox.maps.plugin.gestures.GesturesUtils.addOnMapClickListene
 import static com.mapbox.maps.plugin.gestures.GesturesUtils.getGestures;
 import static com.mapbox.maps.plugin.locationcomponent.LocationComponentUtils.getLocationComponent;
 import static com.mapbox.navigation.base.extensions.RouteOptionsExtensions.applyDefaultNavigationOptions;
-
+import android.database.Cursor;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -16,6 +16,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -26,6 +27,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.media.MediaPlayer;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -77,6 +79,8 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineProvider;
@@ -152,7 +156,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MapActivity extends AppCompatActivity {
-
+    private DatabaseHelper databaseHelper;
     private List<Pothole> routePotholes = new ArrayList<>();
     private boolean isRouting = false;
     MapView mapView;
@@ -163,6 +167,7 @@ public class MapActivity extends AppCompatActivity {
     private final NavigationLocationProvider navigationLocationProvider = new NavigationLocationProvider();
     boolean isDetectionEnabled = false;
     private MaterialButton cancelRoute;
+    private PointAnnotationManager potholePointAnnotationManager;
     private MapboxRouteLineView routeLineView;
     private MapboxRouteLineApi routeLineApi;
     private PointAnnotationManager selectedPointAnnotationManager;
@@ -254,7 +259,7 @@ public class MapActivity extends AppCompatActivity {
                         userLocation.getLongitude(),
                         pothole.getLatitude(),
                         pothole.getLongitude());
-                if (distance < 50) {
+                if (distance < 25) {
                     triggerPotholeAlert();
                     return;
                 }
@@ -412,7 +417,7 @@ public class MapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
         setupWebSocket();
-
+        databaseHelper = new DatabaseHelper(this);
         searchLayout = findViewById(R.id.searchLayout);
         searchLayout.setVisibility(View.VISIBLE);
         bottomNavigationView = findViewById(R.id.bottomNavigationView1);
@@ -438,12 +443,12 @@ public class MapActivity extends AppCompatActivity {
         PointAnnotationManager pointAnnotationManager = PointAnnotationManagerKt.createPointAnnotationManager(annotationPlugin, mapView);
         MapboxNavigationApp.setup(navigationOptions);
         mapboxNavigation = new MapboxNavigation(navigationOptions);
-
+        potholePointAnnotationManager = PointAnnotationManagerKt.createPointAnnotationManager(
+                AnnotationPluginImplKt.getAnnotations(mapView), mapView);
         checkPermissions();
         bottomNavigationView.setBackground(null);
         bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.home) {
-                // ...
             } else if (item.getItemId() == R.id.about) {
                 Intent intent = new Intent(MapActivity.this, MainActivity.class);
                 intent.putExtra("openFragment", "about");
@@ -556,7 +561,7 @@ public class MapActivity extends AppCompatActivity {
             });
 
             addOnMapClickListener(mapView.getMapboxMap(), point -> {
-                selectedPointAnnotationManager.deleteAll();
+                selectedPointAnnotationManager.deleteAll(); // Chỉ xóa điểm setRoute
                 PointAnnotationOptions pointAnnotationOptions = new PointAnnotationOptions()
                         .withTextAnchor(TextAnchor.CENTER)
                         .withIconImage(BitmapFactory.decodeResource(getResources(), R.drawable.test))
@@ -850,34 +855,92 @@ public class MapActivity extends AppCompatActivity {
     }
 
     private void loadPotholeMarkers() {
-        ApiService apiService = ApiClient.getApiService();
-        Call<List<Pothole>> call = apiService.getPotholes();
+        if (isConnectedToInternet()) {
+            ApiService apiService = ApiClient.getApiService();
+            Call<List<Pothole>> call = apiService.getPotholes();
 
-        call.enqueue(new Callback<List<Pothole>>() {
-            @Override
-            public void onResponse(Call<List<Pothole>> call, Response<List<Pothole>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Pothole> potholes = response.body();
-                    AnnotationPlugin annotationPlugin = AnnotationPluginImplKt.getAnnotations(mapView);
-                    PointAnnotationManager pointAnnotationManager = PointAnnotationManagerKt.createPointAnnotationManager(annotationPlugin, mapView);
-
-                    for (Pothole pothole : potholes) {
-                        Point point = Point.fromLngLat(pothole.getLongitude(), pothole.getLatitude());
-                        PointAnnotationOptions options = new PointAnnotationOptions()
-                                .withPoint(point)
-                                .withIconImage(getMarkerIcon(pothole.getSeverity()));
-                        pointAnnotationManager.create(options);
+            call.enqueue(new Callback<List<Pothole>>() {
+                @Override
+                public void onResponse(Call<List<Pothole>> call, Response<List<Pothole>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        savePotholesToLocal(response.body()); // Lưu cục bộ
+                        displayPotholes(response.body());
+                    } else {
+                        displayPotholes(loadPotholesFromLocal()); // Hiển thị dữ liệu cục bộ
                     }
-                } else {
-                    Toast.makeText(MapActivity.this, "Failed to load potholes", Toast.LENGTH_SHORT).show();
                 }
-            }
 
-            @Override
-            public void onFailure(Call<List<Pothole>> call, Throwable t) {
-                Toast.makeText(MapActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                @Override
+                public void onFailure(Call<List<Pothole>> call, Throwable t) {
+                    displayPotholes(loadPotholesFromLocal()); // Hiển thị dữ liệu cục bộ
+                }
+            });
+        } else {
+            displayPotholes(loadPotholesFromLocal());
+        }
+    }
+
+    private boolean isConnectedToInternet() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        return cm != null && cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected();
+    }
+
+    private void savePotholesToLocal(List<Pothole> potholes) {
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        db.execSQL("DELETE FROM " + DatabaseHelper.TABLE_NAME); // Xóa dữ liệu cũ
+        for (Pothole pothole : potholes) {
+            db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME + " (" +
+                            DatabaseHelper.COLUMN_LATITUDE + ", " +
+                            DatabaseHelper.COLUMN_LONGITUDE + ", " +
+                            DatabaseHelper.COLUMN_SEVERITY + ") VALUES (?, ?, ?)",
+                    new Object[]{pothole.getLatitude(), pothole.getLongitude(), pothole.getSeverity()});
+        }
+        db.close();
+    }
+
+    private List<Pothole> loadPotholesFromLocal() {
+        List<Pothole> potholes = new ArrayList<>();
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_NAME, null);
+        while (cursor.moveToNext()) {
+            potholes.add(new Pothole(cursor.getDouble(0), cursor.getDouble(1), cursor.getInt(2)));
+        }
+        cursor.close();
+        db.close();
+        return potholes;
+    }
+
+    private void displayPotholes(List<Pothole> potholes) {
+        potholePointAnnotationManager.deleteAll(); // Xóa các marker cũ
+
+        for (Pothole pothole : potholes) {
+            Point point = Point.fromLngLat(pothole.getLongitude(), pothole.getLatitude());
+            PointAnnotationOptions options = new PointAnnotationOptions()
+                    .withPoint(point)
+                    .withIconImage(getMarkerIcon(pothole.getSeverity()))
+                    .withData(new Gson().toJsonTree(pothole)); // Chuyển thông tin ổ gà thành JsonElement
+
+            potholePointAnnotationManager.create(options);
+        }
+
+        // Gán sự kiện click cho marker ổ gà
+        potholePointAnnotationManager.addClickListener(annotation -> {
+            JsonElement potholeData = annotation.getData();
+            if (potholeData != null) {
+                Pothole clickedPothole = new Gson().fromJson(potholeData, Pothole.class);
+                showPotholeDetails(clickedPothole); // Hiển thị thông tin ổ gà
             }
+            return true;
         });
+    }
+
+    private void showPotholeDetails(Pothole pothole) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Thông tin ổ gà");
+        builder.setMessage("Vị trí: " + pothole.getLatitude() + ", " + pothole.getLongitude() + "\n" +
+                "Mức độ nghiêm trọng: " + pothole.getSeverity());
+        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 
     private String getMarkerIcon(int severity) {

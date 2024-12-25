@@ -44,6 +44,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.mapbox.navigation:android:2.15.2")
     implementation ("com.mapbox.search:mapbox-search-android-ui:1.0.0-rc.6")

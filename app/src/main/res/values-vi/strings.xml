@@ -100,4 +100,20 @@
     <string name="pothole">Ổ gà</string>
     <string name="saturday">Thứ Bảy</string>
     <string name="loading">Đang tải...</string>
+    <string name="weather_unavailable">Không thể lấy dữ liệu thời tiết</string>
+    <string name="location_unavailable">Không thể lấy vị trí</string>
+    <string name="pothole_data_error">Lỗi xử lý dữ liệu ổ gà</string>
+    <string name="hello_user">Xin chào, %1$s</string>
+    <string name="loading_location">Đang tải vị trí...</string>
+    <string name="numbers">Số liệu</string>
+    <string name="chart">Biểu đồ</string>
+    <string name="pothole_levels">Các mức ổ gà</string>
+    <string name="total">Tổng</string>
+    <string name="connection_error1">Lỗi kết nối: Không thể lấy dữ liệu.</string>
+    <string name="no_pothole_data">Không có dữ liệu ổ gà!</string>
+    <string name="pothole_in_radius">Có %1$d ổ gà trong phạm vi.</string>
+    <string name="api_error">Không thể tải dữ liệu ổ gà!</string>
+    <string name="select_distance">Chọn khoảng cách</string>
+    <string name="distance_label">Khoảng cách: %1$d mét</string>
+    <string name="distance_label1">Khoảng cách: 500 mét</string>
 </resources>

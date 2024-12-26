@@ -673,10 +673,9 @@ public class MapActivity extends AppCompatActivity {
 
                         checkPotholesOnRoute(routePoints);
 
-                        // Liên tục cập nhật vị trí để kiểm tra khoảng cách tới đích
-                        LocationEngineRequest locationEngineRequest = new LocationEngineRequest.Builder(1000L) // 1000ms
+                        LocationEngineRequest locationEngineRequest = new LocationEngineRequest.Builder(1000L)
                                 .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
-                                .setMaxWaitTime(2000L) // 2000ms, thời gian tối đa trước khi chờ
+                                .setMaxWaitTime(2000L)
                                 .build();
 
                         locationEngine.requestLocationUpdates(
